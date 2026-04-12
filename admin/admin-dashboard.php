@@ -42,9 +42,9 @@ $recentBookingsQuery = "
 $recentBookings = $conn->query($recentBookingsQuery)->fetch_all(MYSQLI_ASSOC);
 
 
-/* =========================
+/*
    VEHICLE TYPE STATS
-========================= */
+ */
 $vehicleStatsQuery = "SELECT type, COUNT(*) as count FROM vehicles GROUP BY type";
 $vehicleStatsResult = $conn->query($vehicleStatsQuery);
 
