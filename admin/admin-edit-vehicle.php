@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = sanitize($_POST['description']);
     $availability = isset($_POST['availability']) ? 1 : 0;
 
-    $file_path = $vehicle['image'];
+    $file_path = $vehicle['image']; // Default to old image
 
     // IMAGE UPLOAD LOGIC (Only if a new file is selected)
     if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
@@ -127,11 +127,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="admin-dashboard.php" class="nav-item" style="color: white; text-decoration: none;">📊
                     Dashboard</a>
                 <a href="admin-vehicles.php" class="nav-item active"
-                    style="color: white; background: var(--brand-orange); text-decoration: none;">Vehicles</a>
+                    style="color: white; background: var(--brand-orange); text-decoration: none;">🚗 Vehicles</a>
                 <a href="admin-bookings.php" class="nav-item" style="color: white; text-decoration: none;">📅
                     Bookings</a>
                 <a href="../logout.php" class="nav-item"
-                    style="margin-top: auto; color: #fca5a5; text-decoration: none;">Logout</a>
+                    style="margin-top: auto; color: #fca5a5; text-decoration: none;">🚪 Logout</a>
             </nav>
         </aside>
 
