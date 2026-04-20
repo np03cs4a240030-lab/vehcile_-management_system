@@ -221,9 +221,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </main>
 
     <footer class="footer">
-        <div>© 2026 All rights reserved.</div>
+        <div>© 2026 Bhatbhatey Team. All rights reserved.</div>
         <div style="display: flex; gap: 20px;">
-            <span>Developed by Bhatbhatey Development Team</span>
+            
         </div>
     </footer>
 </body>

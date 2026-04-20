@@ -24,14 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please fill in all fields';
     } elseif ($password !== $confirmPassword) {
         $error = 'Passwords do not match';
-    } elseif (strlen($password) < 8) {
-        $error = 'Password must be at least 8 characters';
-    } elseif (!preg_match('/[A-Z]/', $password)) {
-        $error = 'Password must contain at least one uppercase letter';
-    } elseif (!preg_match('/[0-9]/', $password)) {
-        $error = 'Password must contain at least one number';
-    } elseif (!preg_match('/[^a-zA-Z0-9]/', $password)) {
-        $error = 'Password must contain at least one special character (e.g. @, #, !)';
+    } elseif (strlen($password) < 6) {
+        $error = 'Password must be at least 6 characters';
     } else {
         // Check if email already exists
         $sql = "SELECT id FROM users WHERE email = ?";
@@ -66,12 +60,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Join Bhatbhatey | Premium Vehicle Rentals</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
     <style>
@@ -85,114 +81,223 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --text-muted: #64748b;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
 
-        body { 
-            background: var(--bg-dark); 
-            color: white; 
-            min-height: 100vh; 
-            overflow-x: hidden; 
+        body {
+            background: var(--bg-dark);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
             display: flex;
         }
 
-        .split-layout { display: flex; width: 100%; min-height: 100vh; }
+        .split-layout {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .logo {
+            height: 50px;
+        }
 
         /* --- Left Side: Video & Branding --- */
         .left-section {
-            width: 45%; 
-            position: relative; 
-            display: flex; 
-            align-items: center; 
+            width: 45%;
+            position: relative;
+            display: flex;
+            align-items: center;
             padding: 80px;
-            overflow: hidden; 
+            overflow: hidden;
             background: #000;
         }
 
         .video-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
         }
 
         .video-container video {
-            width: 100%; height: 100%; object-fit: cover; 
-            opacity: 0.5; filter: saturate(1.2) brightness(0.7);
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.5;
+            filter: saturate(1.2) brightness(0.7);
         }
 
-        .left-content { position: relative; z-index: 5; }
-        .left-content h1 { font-size: 3.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; }
-        .left-content span { color: var(--primary); }
-        .left-content p { color: #cbd5e1; font-size: 1.2rem; max-width: 420px; line-height: 1.6; }
+        .left-content {
+            position: relative;
+            z-index: 5;
+        }
+
+        .left-content h1 {
+            font-size: 3.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+        }
+
+        .left-content span {
+            color: var(--primary);
+        }
+
+        .left-content p {
+            color: #cbd5e1;
+            font-size: 1.2rem;
+            max-width: 420px;
+            line-height: 1.6;
+        }
 
         .floating-car {
-            position: absolute; bottom: 50px; right: -30px; width: 400px;
-            z-index: 6; filter: drop-shadow(0 30px 50px rgba(0,0,0,0.9));
+            position: absolute;
+            bottom: 50px;
+            right: -30px;
+            width: 400px;
+            z-index: 6;
+            filter: drop-shadow(0 30px 50px rgba(0, 0, 0, 0.9));
             pointer-events: none;
         }
 
         /* --- Right Side: Form --- */
         .right-section {
-            width: 55%; 
-            display: flex; 
-            align-items: center; 
+            width: 55%;
+            display: flex;
+            align-items: center;
             justify-content: center;
             background: radial-gradient(circle at 70% 30%, #1e293b 0%, #0a0a0b 100%);
             padding: 40px;
         }
 
         .form-card {
-            width: 100%; 
-            max-width: 520px; 
+            width: 100%;
+            max-width: 520px;
             background: var(--glass);
-            backdrop-filter: blur(30px); 
+            backdrop-filter: blur(30px);
             -webkit-backdrop-filter: blur(30px);
-            border: 1px solid var(--glass-border); 
-            padding: 50px; 
+            border: 1px solid var(--glass-border);
+            padding: 50px;
             border-radius: 40px;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
         }
 
-        .reveal { opacity: 0; transform: translateY(30px); }
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+        }
 
-        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .input-group { margin-bottom: 22px; position: relative; }
-        .input-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 22px;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         .input-group input {
-            width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border);
-            padding: 15px 18px; border-radius: 14px; color: white; outline: none; transition: 0.4s;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            padding: 15px 18px;
+            border-radius: 14px;
+            color: white;
+            outline: none;
+            transition: 0.4s;
         }
 
         .input-group input:focus {
-            border-color: var(--primary); background: rgba(255,255,255,0.08);
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
             box-shadow: 0 0 20px var(--primary-glow);
         }
 
         /* Password Strength UI */
-        .strength-meter { height: 4px; width: 100%; background: rgba(255,255,255,0.1); margin-top: 8px; border-radius: 2px; overflow: hidden; }
-        .strength-bar { height: 100%; width: 0%; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .strength-meter {
+            height: 4px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 8px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
         .btn-register {
-            width: 100%; padding: 18px; background: var(--primary); color: white;
-            border: none; border-radius: 14px; font-weight: 800; font-size: 16px;
-            cursor: pointer; transition: 0.3s; margin-top: 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
-        .alert-error { 
-            background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #fca5a5; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 14px;
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 14px;
         }
+        
 
         @media (max-width: 1100px) {
-            .left-section { display: none; }
-            .right-section { width: 100%; padding: 20px; }
-            body { overflow-y: auto; }
+            .left-section {
+                display: none;
+            }
+
+            .right-section {
+                width: 100%;
+                padding: 20px;
+            }
+
+            body {
+                overflow-y: auto;
+            }
         }
     </style>
 </head>
-<body>
 
+<body>
     <div class="split-layout">
+
         <div class="left-section">
+            <div class="reveal">
+            </div>
+
             <div class="video-container">
                 <video autoplay muted loop playsinline>
                     <source src="./carbg (1).mp4" type="video/mp4">
@@ -200,11 +305,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="left-content">
-                <div class="reveal">
-                    <img src="assets/images/logo.png" alt="Bhatbhatey" style="height: 50px; margin-bottom: 40px;">
-                </div>
                 <h1 class="reveal">Your Next <span>Adventure</span> Starts Here.</h1>
-                <p class="reveal">Join Nepal's most trusted vehicle rental network. Premium fleet, instant booking, and zero hidden costs.</p>
+                <p class="reveal">Join Nepal's most trusted vehicle rental network. Premium fleet, instant booking, and
+                    zero hidden costs.</p>
             </div>
 
         </div>
@@ -212,7 +315,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="right-section">
             <div class="form-card reveal">
                 <h2 style="font-size: 30px; margin-bottom: 8px;">Create Account</h2>
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 35px;">Enter your details to get started.</p>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 35px;">Enter your details to get
+                    started.</p>
 
                 <?php if ($error): ?>
                     <div class="alert-error">⚠️ <?php echo $error; ?></div>
@@ -221,17 +325,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <form method="POST" id="registerForm">
                     <div class="input-group">
                         <label>Full Name</label>
-                        <input type="text" name="name" placeholder="John Doe" required value="<?php echo htmlspecialchars($name ?? ''); ?>">
+                        <input type="text" name="name" placeholder="Full name" required
+                            value="<?php echo htmlspecialchars($name ?? ''); ?>">
                     </div>
 
                     <div class="input-row">
                         <div class="input-group">
                             <label>Email Address</label>
-                            <input type="email" name="email" placeholder="john@example.com" required>
+                            <input type="email" name="email" placeholder="Email" required>
                         </div>
                         <div class="input-group">
                             <label>Phone Number</label>
-                            <input type="tel" name="phone" placeholder="98XXXXXXXX" required>
+                            <input type="tel" name="phone" placeholder="980000000" required>
                         </div>
                     </div>
 
@@ -241,20 +346,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="strength-meter">
                             <div class="strength-bar" id="strengthBar"></div>
                         </div>
-                        <p id="strengthHint" style="font-size:11px; margin-top:6px; min-height:16px; transition:color 0.3s;"></p>
                     </div>
 
                     <div class="input-group">
                         <label>Confirm Password</label>
-                        <input type="password" name="confirmPassword" id="confirmPass" placeholder="Repeat password" required>
+                        <input type="password" name="confirmPassword" id="confirmPass" placeholder="Repeat password"
+                            required>
                     </div>
 
                     <button type="submit" class="btn-register" id="submitBtn">Create Account</button>
                 </form>
 
                 <p style="text-align: center; margin-top: 30px; font-size: 14px; color: var(--text-muted);">
-                    Already have an account? 
-                    <a href="login.php" style="color: var(--primary); text-decoration: none; font-weight: 700; margin-left: 5px;">Sign In</a>
+                    Already have an account?
+                    <a href="login.php"
+                        style="color: var(--primary); text-decoration: none; font-weight: 700; margin-left: 5px;">Sign
+                        In</a>
                 </p>
             </div>
         </div>
@@ -282,39 +389,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // 3. Password Strength Logic
             const passInput = document.getElementById('mainPass');
-            const bar      = document.getElementById('strengthBar');
-            const hint     = document.getElementById('strengthHint');
-            const submitBtn = document.getElementById('submitBtn');
-
-            function getStrength(val) {
-                let score = 0;
-                if (val.length >= 8)              score++;
-                if (/[A-Z]/.test(val))            score++;
-                if (/[0-9]/.test(val))            score++;
-                if (/[^a-zA-Z0-9]/.test(val))    score++;
-                return score;
-            }
+            const bar = document.getElementById('strengthBar');
 
             passInput.addEventListener('input', () => {
-                const val   = passInput.value;
-                const score = getStrength(val);
-
-                const levels = [
-                    { width: '0%',   color: 'transparent', label: '',          ok: false },
-                    { width: '25%',  color: '#ef4444',     label: '🔴 Weak — add uppercase, number & special char', ok: false },
-                    { width: '50%',  color: '#f97316',     label: '🟠 Fair — add a number & special char',          ok: false },
-                    { width: '75%',  color: '#facc15',     label: '🟡 Good — add a special character (e.g. @, #, !)', ok: false },
-                    { width: '100%', color: '#22c55e',     label: '🟢 Strong password!',                            ok: true  },
-                ];
-
-                const level = val.length === 0 ? levels[0] : levels[score];
-                bar.style.width      = level.width;
-                bar.style.background = level.color;
-                hint.textContent     = level.label;
-                hint.style.color     = level.color;
-                submitBtn.disabled   = !level.ok;
-                submitBtn.style.opacity = level.ok ? '1' : '0.5';
-                submitBtn.style.cursor  = level.ok ? 'pointer' : 'not-allowed';
+                const val = passInput.value;
+                if (val.length === 0) { bar.style.width = '0%'; }
+                else if (val.length < 5) { bar.style.width = '30%'; bar.style.background = '#ef4444'; }
+                else if (val.length < 10) { bar.style.width = '60%'; bar.style.background = '#f97316'; }
+                else { bar.style.width = '100%'; bar.style.background = '#22c55e'; }
             });
 
             // 4. Magnetic Button Interaction
@@ -332,4 +414,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
     </script>
 </body>
+
 </html>
