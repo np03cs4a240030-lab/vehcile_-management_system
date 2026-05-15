@@ -1,0 +1,6 @@
+<?php
+
+define("KHALTI_SECRET_KEY", "482e760b3a9f4a4cb8605debe02d535e");
+define("KHALTI_PUBLIC_KEY", "727a3e1866564667a6673bf0e47a7c17");
+
+?>
