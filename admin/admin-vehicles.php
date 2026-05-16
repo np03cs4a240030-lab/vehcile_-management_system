@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
         }
 
-        // ✅ After any action, set a flash message
+        //  After any action, set a flash message
         $_SESSION['success'] = 'Action completed successfully!';
         redirect('admin-vehicles.php');
     }
@@ -61,20 +61,50 @@ $vehicles = $conn->query($sql);
 <body style="background: var(--brand-light-gray);">
     <div class="dashboard-layout">
         <!-- Sidebar -->
-        <aside class="sidebar" style="background: var(--brand-dark-blue);">
-            <div class="sidebar-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <img src="../assets/images/logo.png" alt="Bhatbhatey Rental" style="height: 3rem;">
-                <h3 style="color: white; margin-top: 1rem;">Admin Panel</h3>
-            </div>
+<!-- FONT AWESOME -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-            <nav class="sidebar-nav">
-                <a href="admin-dashboard.php" class="nav-item" style="color: white;">📊 Dashboard</a>
-                <a href="admin-vehicles.php" class="nav-item active" style="color: white; background: var(--brand-orange);">🚗 Vehicles</a>
-                <a href="admin-bookings.php" class="nav-item" style="color: white;">📅 Bookings</a>
-                <a href="admin-users.php" class="nav-item" style="color: white;">👥 Users</a>
-                <a href="../logout.php" class="nav-item" style="margin-top: auto; color: #fca5a5;">🚪 Logout</a>
-            </nav>
-        </aside>
+<!-- SIDEBAR -->
+<aside class="sidebar">
+
+    <div class="sidebar-logo">
+        <img src="../assets/images/logo.png" alt="Logo">
+        <span>Admin Panel</span>
+    </div>
+
+    <nav class="sidebar-menu">
+
+        <a href="admin-dashboard.php">
+            <i class="fas fa-gauge-high"></i>
+            Dashboard
+        </a>
+
+        <a href="admin-vehicles.php" class="active">
+            <i class="fas fa-car"></i>
+            Vehicles
+        </a>
+
+        <a href="admin-bookings.php">
+            <i class="fas fa-calendar-days"></i>
+            Bookings
+        </a>
+
+        <a href="admin-users.php">
+            <i class="fas fa-users"></i>
+            Users
+        </a>
+
+        <div class="logout-link">
+            <a href="../logout.php">
+                <i class="fas fa-right-from-bracket"></i>
+                Logout
+            </a>
+        </div>
+
+    </nav>
+
+</aside>
+        
 
         <!-- Main Content -->
         <main class="main-content">
@@ -94,9 +124,9 @@ $vehicles = $conn->query($sql);
                            class="form-input" style="flex: 1;">
                     <select name="type" class="form-input">
                         <option value="all">All Types</option>
-                        <option value="Car" <?php echo $type_filter === 'Car' ? 'selected' : ''; ?>>🚗 Cars</option>
-                        <option value="Bike" <?php echo $type_filter === 'Bike' ? 'selected' : ''; ?>>🏍️ Bikes</option>
-                        <option value="Scooter" <?php echo $type_filter === 'Scooter' ? 'selected' : ''; ?>>🛵 Scooters</option>
+                        <option value="Car" <?php echo $type_filter === 'Car' ? 'selected' : ''; ?>> Cars</option>
+                        <option value="Bike" <?php echo $type_filter === 'Bike' ? 'selected' : ''; ?>Bikes</option>
+                        <option value="Scooter" <?php echo $type_filter === 'Scooter' ? 'selected' : ''; ?>>Scooters</option>
                     </select>
                     <button type="submit" class="btn btn-primary">Search</button>
                 </form>
@@ -111,12 +141,10 @@ $vehicles = $conn->query($sql);
                             <img src="<?php echo htmlspecialchars($vehicle['image']); ?>" 
                                  alt="<?php echo htmlspecialchars($vehicle['name']); ?>"
                                  style="width: 100%; height: 100%; object-fit: cover;">
-                            <div class="badge-overlay">
-                                <?php 
-                                $icons = ['Car' => '🚗', 'Bike' => '🏍️', 'Scooter' => '🛵'];
-                                echo $icons[$vehicle['type']] . ' ' . htmlspecialchars($vehicle['type']); 
-                                ?>
-                            </div>
+                                 <div class="badge-overlay">
+    <?php echo htmlspecialchars($vehicle['type']); ?>
+</div>
+                            
                             <?php if (!$vehicle['availability']): ?>
                                 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;">
                                     <span class="badge badge-danger" style="font-size: 1rem; padding: 0.75rem 1.5rem;">
@@ -131,9 +159,9 @@ $vehicles = $conn->query($sql);
                             </h3>
                             
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
-                                <div>📍 <?php echo htmlspecialchars($vehicle['location']); ?></div>
-                                <div>⛽ <?php echo htmlspecialchars($vehicle['fuel_type'] ?? 'N/A'); ?></div>
-                                <div>⚙️ <?php echo htmlspecialchars($vehicle['transmission'] ?? 'N/A'); ?></div>
+                                <div> <?php echo htmlspecialchars($vehicle['location']); ?></div>
+                                <div> <?php echo htmlspecialchars($vehicle['fuel_type'] ?? 'N/A'); ?></div>
+                                <div> <?php echo htmlspecialchars($vehicle['transmission'] ?? 'N/A'); ?></div>
                                 <?php if ($vehicle['seats']): ?>
                                 <div>👥 <?php echo $vehicle['seats']; ?> Seats</div>
                                 <?php endif; ?>
@@ -178,23 +206,84 @@ $vehicles = $conn->query($sql);
         </main>
     </div>
 
-    <style>
-        .sidebar-nav {
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 200px);
-        }
-        .sidebar-nav .nav-item {
-            padding: 1rem 1.5rem;
-            margin-bottom: 0.5rem;
-            border-radius: 0.5rem;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-        .sidebar-nav .nav-item:hover {
-            background: rgba(255,255,255,0.1);
-        }
-    </style>
+<style>
+        /* SIDEBAR */
+.sidebar{
+    width:240px;
+    background:#1e293b;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    position:fixed;
+    top:0;
+    left:0;
+}
+
+.sidebar-logo{
+    padding:20px 24px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.sidebar-logo img{
+    height:36px;
+}
+
+.sidebar-logo span{
+    font-size:13px;
+    color:#94a3b8;
+    font-weight:600;
+}
+
+.sidebar-menu{
+    padding:16px 12px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+}
+
+.sidebar-menu a{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:11px 14px;
+    border-radius:8px;
+    color:#94a3b8;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:500;
+    margin-bottom:4px;
+    transition:all 0.2s;
+}
+
+.sidebar-menu a i{
+    width:18px;
+    text-align:center;
+    font-size:15px;
+}
+
+.sidebar-menu a:hover{
+    background:rgba(255,255,255,0.07);
+    color:white;
+}
+
+.sidebar-menu a.active{
+    background:#f97316;
+    color:white;
+}
+
+
+.sidebar-menu .logout-link a{
+    color:#fca5a5;
+}
+
+.sidebar-menu .logout-link a:hover{
+    background:rgba(239,68,68,0.15);
+    color:#fca5a5;
+}
+    </style> 
 </body>
 </html>
