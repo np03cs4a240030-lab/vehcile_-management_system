@@ -336,7 +336,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="vehicle-content">
 
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-                            <h3 style="font-size: 22px; margin: 0;">⭐ Customer Reviews</h3>
+                            <h3 style="font-size: 22px; margin: 0;"> Customer Reviews</h3>
                             <?php if ($totalReviews > 0): ?>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <div style="font-size: 28px; font-weight: 700; color: var(--brand-orange);">
