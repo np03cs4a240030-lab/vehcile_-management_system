@@ -236,8 +236,6 @@ $vehicles = $conn->query($sql);
                                 <!-- Image Preview -->
                                 <td>
                                     <img src="../admin/<?php echo htmlspecialchars($vehicle['image']); ?>" 
-
-                                    
                                          style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
                                 </td>
                                 

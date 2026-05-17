@@ -6,6 +6,7 @@ if (!isLoggedIn() || isAdmin()) {
 }
 
 $currentUser = getCurrentUser();
+<<<<<<< HEAD
 
 $passwordMsg   = '';
 $passwordError = '';
@@ -45,6 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         }
     }
 }
+=======
+>>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+<<<<<<< HEAD
         :root {
             --primary:       #f97316;
             --primary-dark:  #ea6c09;
@@ -326,12 +330,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             .info-grid       { grid-template-columns:1fr; }
             .profile-avatar-row { padding:0 20px; }
             .profile-body    { padding:0 20px 24px; }
+=======
+        :root{
+            --primary:#f97316;--primary-light:#fff7ed;
+            --dark:#0f172a;--dark-blue:#1e293b;
+            --slate:#64748b;--border:#e2e8f0;--bg:#f1f5f9;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Plus Jakarta Sans',sans-serif;}
+        body{background:var(--bg);display:flex;min-height:100vh;}
+        a{text-decoration:none;transition:0.2s;}
+
+        /* SIDEBAR */
+        .sidebar{width:250px;background:var(--dark-blue);position:fixed;height:100%;display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,0.15);z-index:100;}
+
+        .sidebar-logo{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;}
+        .sidebar-logo img{height:38px;width:auto;object-fit:contain;filter:brightness(0) invert(1);}
+        .logo-fallback{display:none;width:36px;height:36px;background:var(--primary);border-radius:9px;align-items:center;justify-content:center;color:white;font-size:15px;flex-shrink:0;}
+        .sidebar-logo-text{display:flex;flex-direction:column;line-height:1.2;}
+        .sidebar-logo-text .lt-name{color:white;font-size:15px;font-weight:800;}
+        .sidebar-logo-text .lt-sub{color:#64748b;font-size:9px;text-transform:uppercase;letter-spacing:1px;}
+
+        .sidebar-nav{padding:16px 12px;flex:1;overflow-y:auto;}
+        .nav-section-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#475569;font-weight:700;padding:0 8px;margin:16px 0 6px;}
+        .sidebar-nav a{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;color:#94a3b8;font-size:14px;font-weight:600;margin-bottom:3px;}
+        .sidebar-nav a i{width:18px;text-align:center;font-size:14px;}
+        .sidebar-nav a:hover{background:#334155;color:white;}
+        .sidebar-nav a.active{background:var(--primary);color:white;box-shadow:0 4px 12px rgba(249,115,22,0.3);}
+        .sidebar-nav a.danger:hover{background:#7f1d1d;color:#fca5a5;}
+
+        /* Sidebar footer */
+        .sidebar-footer{padding:12px 14px;border-top:1px solid rgba(255,255,255,0.07);}
+        .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);}
+        .user-initials{width:36px;height:36px;background:var(--primary);border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:800;flex-shrink:0;letter-spacing:0.5px;text-transform:uppercase;}
+        .user-info-inner{flex:1;min-width:0;}
+        .u-name{color:white;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .u-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#94a3b8;margin-top:2px;}
+        .u-badge i{font-size:7px;color:#22c55e;}
+
+        /* MAIN */
+        .main{margin-left:250px;padding:32px;width:100%;min-height:100vh;}
+        .page-header{margin-bottom:28px;}
+        .page-header h1{font-size:24px;font-weight:800;color:var(--dark);}
+        .page-header p{color:var(--slate);margin-top:4px;font-size:14px;}
+
+        /* PROFILE CARD
+           Critical: NO overflow:hidden on outer card — it clips the avatar.
+           overflow:hidden only on the banner itself. */
+        .profile-card{
+            background:white;border-radius:20px;
+            border:1px solid var(--border);
+            box-shadow:0 4px 20px rgba(0,0,0,0.06);
+        }
+        .profile-banner{
+            height:140px;border-radius:20px 20px 0 0;
+            background:linear-gradient(135deg,#0f172a 0%,#1e293b 55%,#334155 100%);
+            position:relative;overflow:hidden;
+        }
+        .profile-banner::before{
+            content:'';position:absolute;inset:0;
+            background:
+                radial-gradient(circle at 10% 70%, rgba(249,115,22,0.22) 0%, transparent 50%),
+                radial-gradient(circle at 90% 10%, rgba(249,115,22,0.13) 0%, transparent 45%);
+        }
+
+        /* Avatar row — overlaps the banner via negative margin */
+        .profile-avatar-row{
+            display:flex;align-items:flex-end;gap:20px;
+            padding:0 32px;
+            margin-top:-46px;
+            margin-bottom:24px;
+            position:relative;z-index:2;
+        }
+        .profile-avatar{
+            width:90px;height:90px;
+            background:linear-gradient(135deg,#f97316,#fb923c);
+            border-radius:20px;
+            display:flex;align-items:center;justify-content:center;
+            font-size:36px;color:white;
+            border:4px solid white;
+            box-shadow:0 8px 28px rgba(249,115,22,0.30);
+            flex-shrink:0;
+        }
+        .profile-meta{padding-bottom:6px;}
+        .profile-name{font-size:22px;font-weight:800;color:var(--dark);line-height:1.2;margin-bottom:5px;}
+        .profile-since{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--slate);}
+        .profile-since i{color:var(--primary);font-size:11px;}
+
+        .profile-body{padding:0 32px 32px;}
+        .info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:28px;}
+        .info-item{background:#f8fafc;border:1px solid var(--border);border-radius:14px;padding:18px 20px;transition:0.2s;}
+        .info-item:hover{border-color:var(--primary);background:var(--primary-light);}
+        .info-label{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--slate);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;}
+        .info-label i{color:var(--primary);font-size:12px;}
+        .info-value{font-size:15px;font-weight:700;color:var(--dark);}
+        .role-badge{display:inline-flex;align-items:center;gap:6px;background:#dbeafe;color:#1d4ed8;padding:5px 13px;border-radius:100px;font-size:12px;font-weight:700;}
+
+        hr.divider{border:none;border-top:1px solid var(--border);margin:24px 0;}
+
+        .profile-actions{display:flex;gap:12px;flex-wrap:wrap;}
+        .btn-act-primary{background:var(--primary);color:white;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
+        .btn-act-primary:hover{background:#ea6c09;color:white;}
+        .btn-act-secondary{background:white;color:var(--slate);padding:11px 22px;border-radius:10px;font-size:14px;font-weight:700;border:1px solid var(--border);display:flex;align-items:center;gap:7px;}
+        .btn-act-secondary:hover{border-color:var(--primary);color:var(--primary);}
+
+        @media(max-width:700px){
+            .info-grid{grid-template-columns:1fr;}
+            .profile-avatar-row{padding:0 20px;}
+            .profile-body{padding:0 20px 24px;}
+>>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
         }
     </style>
 </head>
 <body>
 
+<<<<<<< HEAD
 <!-- ═══════════════════════════════ SIDEBAR ══════════════════════════════ -->
+=======
+>>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
 <div class="sidebar">
     <a href="index.php" class="sidebar-logo">
         <img src="nobglogo.png" alt="Bhatbhatey"
@@ -366,7 +481,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     </div>
 </div>
 
+<<<<<<< HEAD
 <!-- ═══════════════════════════════ MAIN ═════════════════════════════════ -->
+=======
+>>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
 <div class="main">
     <div class="page-header">
         <h1>My Profile</h1>
@@ -418,15 +536,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                 <a href="vehicles.php" class="btn-act-primary">
                     <i class="fas fa-car"></i> Browse Vehicles
                 </a>
+<<<<<<< HEAD
                 <!-- Change Password button — matches existing btn-act-secondary style -->
                 <button class="btn-act-secondary" onclick="openModal()">
                     <i class="fas fa-lock"></i> Change Password
                 </button>
+=======
+>>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
             </div>
         </div>
     </div>
 </div>
 
+<<<<<<< HEAD
 <!-- ═══════════════════════════ CHANGE PASSWORD MODAL ════════════════════ -->
 <div class="modal-overlay <?php echo ($passwordError || $passwordMsg) ? 'open' : ''; ?>" id="pwModal">
     <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -569,5 +691,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         hint.textContent = info.label;
     }
 </script>
+=======
+>>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
 </body>
 </html>
