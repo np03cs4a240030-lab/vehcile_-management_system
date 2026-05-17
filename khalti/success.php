@@ -1,264 +1,218 @@
 <?php
 
-include '../includes/connection.php';
-include 'khalti-config.php';
+require_once '../config.php';
 
-// ── Session ───────────────────────────────────────────────────────────────────
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+if (!isLoggedIn()) {
+    redirect('../login.php');
 }
 
-// ── PDF Generator ─────────────────────────────────────────────────────────────
-function generate_payment_pdf(bool $success, string $booking_id, string $pidx, string $date): void
-{
-    $title        = $success ? 'Payment Successful' : 'Payment Failed';
-    $status_label = $success ? 'PAID'               : 'FAILED';
-    $W = 595; $H = 842;
+// Khalti returns these in the URL after payment
+$pidx       = $_GET['pidx']               ?? '';
+$status     = $_GET['status']             ?? '';
+$booking_id = (int)($_GET['purchase_order_id'] ?? 0);
+$amount     = $_GET['amount']             ?? '';
 
-    if ($success) {
-        $accent_r = 0.11; $accent_g = 0.63; $accent_b = 0.33;
-    } else {
-        $accent_r = 0.80; $accent_g = 0.18; $accent_b = 0.18;
-    }
-
-    $stream = '';
-    $stream .= sprintf("%.2f %.2f %.2f rg\n", $accent_r, $accent_g, $accent_b);
-    $stream .= "0 772 595 70 re f\n";
-    $stream .= "1 1 1 rg\n";
-    $stream .= "40 100 515 640 re f\n";
-    $stream .= sprintf("%.2f %.2f %.2f rg\n", $accent_r, $accent_g, $accent_b);
-    $stream .= "40 738 515 4 re f\n";
-
-    $add_text = function(string &$s, string $text, float $x, float $y, float $size, bool $bold, float $r, float $g, float $b) {
-        $font    = $bold ? 'F2' : 'F1';
-        $escaped = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
-        $s .= "BT\n";
-        $s .= sprintf("/%s %.1f Tf\n", $font, $size);
-        $s .= sprintf("%.2f %.2f %.2f rg\n", $r, $g, $b);
-        $s .= sprintf("%.1f %.1f Td\n", $x, $y);
-        $s .= "($escaped) Tj\nET\n";
-    };
-
-    $add_text($stream, 'Booking System',  50, 800, 20, true,  1, 1, 1);
-    $add_text($stream, 'Payment Receipt', 50, 782, 10, false, 1, 1, 1);
-
-    $status_y = 690;
-    $add_text($stream, $title, 50, $status_y, 26, true, $accent_r, $accent_g, $accent_b);
-
-    $stream .= sprintf("%.2f %.2f %.2f rg\n", $accent_r, $accent_g, $accent_b);
-    $stream .= "50 " . ($status_y - 28) . " 80 22 re f\n";
-    $add_text($stream, $status_label, 54, $status_y - 20, 12, true, 1, 1, 1);
-
-    $stream .= "0.85 0.85 0.85 RG\n0.5 w\n";
-    $stream .= "50 " . ($status_y - 46) . " m 545 " . ($status_y - 46) . " l S\n";
-
-    $rows = [
-        ['Date & Time',          $date],
-        ['Transaction ID (pidx)', $pidx],
-    ];
-    if ($success && $booking_id) {
-        $rows[] = ['Booking ID',     $booking_id];
-        $rows[] = ['Payment Method', 'Khalti'];
-        $rows[] = ['Payment Status', 'Completed'];
-    }
-
-    $row_y = $status_y - 72;
-    foreach ($rows as $row) {
-        $add_text($stream, $row[0], 55,  $row_y, 10, true,  0.4, 0.4, 0.4);
-        $add_text($stream, $row[1], 220, $row_y, 10, false, 0.1, 0.1, 0.1);
-        $stream .= "0.92 0.92 0.92 RG\n0.3 w\n";
-        $stream .= "55 " . ($row_y - 6) . " m 540 " . ($row_y - 6) . " l S\n";
-        $row_y -= 28;
-    }
-
-    $msg = $success
-        ? 'Thank you for your payment. Your booking is confirmed.'
-        : 'Your payment could not be processed. Please try again or contact support.';
-    $add_text($stream, $msg, 50, 140, 10, false, 0.3, 0.3, 0.3);
-
-    $stream .= "0.95 0.95 0.95 rg\n0 40 595 60 re f\n";
-    $add_text($stream, 'Generated on ' . $date, 50, 58, 8, false, 0.5, 0.5, 0.5);
-    $add_text($stream, 'Powered by Khalti',     50, 46, 8, false, 0.5, 0.5, 0.5);
-
-    $stream_len = strlen($stream);
-    $pdf = ''; $xref = [];
-    $add_obj = function(int $n, string $body) use (&$pdf, &$xref): void {
-        $xref[$n] = strlen($pdf);
-        $pdf .= "$n 0 obj\n$body\nendobj\n";
-    };
-
-    $pdf .= "%PDF-1.4\n";
-    $add_obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
-    $add_obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-    $add_obj(3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 $W $H] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>");
-    $add_obj(4, "<< /Length $stream_len >>\nstream\n$stream\nendstream");
-    $add_obj(5, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-    $add_obj(6, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
-
-    $xref_offset = strlen($pdf);
-    $obj_count   = 7;
-    $pdf .= "xref\n0 $obj_count\n0000000000 65535 f \n";
-    for ($i = 1; $i < $obj_count; $i++) {
-        $pdf .= sprintf("%010d 00000 n \n", $xref[$i]);
-    }
-    $pdf .= "trailer\n<< /Size $obj_count /Root 1 0 R >>\nstartxref\n$xref_offset\n%%EOF\n";
-
-    $filename = $success ? 'payment-success.pdf' : 'payment-failed.pdf';
-    header('Content-Type: application/pdf');
-    header("Content-Disposition: attachment; filename=\"$filename\"");
-    header('Content-Length: ' . strlen($pdf));
-    header('Cache-Control: no-cache, no-store');
-    echo $pdf;
-    exit;
+if (empty($pidx) || empty($booking_id)) {
+    die("Invalid payment response.");
 }
 
-// ── Download request — serve PDF from session ─────────────────────────────────
-$pidx = $_GET['pidx'] ?? '';
-
-if (!empty($_GET['download'])) {
-    $s          = $_SESSION['khalti_result'] ?? [];
-    $success    = (bool)($s['success']    ?? false);
-    $booking_id = (string)($s['booking_id'] ?? '');
-    $date       = $s['date'] ?? date('Y-m-d H:i:s');
-    $pidx       = $s['pidx'] ?? $pidx;
-    generate_payment_pdf($success, $booking_id, $pidx, $date);
-}
+$user_id = $_SESSION['user_id'];
 
 // ── Verify with Khalti API ────────────────────────────────────────────────────
-$success    = false;
-$booking_id = '';
-$date       = date('Y-m-d H:i:s');
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL,            'https://a.khalti.com/api/v2/epayment/lookup/');
+curl_setopt($ch, CURLOPT_POST,           1);
+curl_setopt($ch, CURLOPT_POSTFIELDS,     json_encode(['pidx' => $pidx]));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT,        30);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+curl_setopt($ch, CURLOPT_HTTPHEADER,     [
+    'Authorization: Key ' . KHALTI_SECRET_KEY,
+    'Content-Type: application/json',
+]);
 
-if (!empty($pidx)) {
+$response = curl_exec($ch);
+curl_close($ch);
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL,            'https://a.khalti.com/api/v2/epayment/lookup/');
-    curl_setopt($ch, CURLOPT_POST,           1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS,     json_encode(['pidx' => $pidx]));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER,     [
-        'Authorization: Key ' . KHALTI_SECRET_KEY,
-        'Content-Type: application/json',
-    ]);
+$res     = json_decode($response, true);
+$success = isset($res['status']) && $res['status'] === 'Completed';
 
-    $res = json_decode(curl_exec($ch), true);
-    curl_close($ch);
-
-    if (isset($res['status']) && $res['status'] === 'Completed') {
-
-        $success    = true;
-        $booking_id = (string)($res['purchase_order_id'] ?? '');
-
-        // ── Update bookings table ─────────────────────────────────────────────
-        $stmt = $conn->prepare("UPDATE bookings SET payment_status = 'Completed' WHERE id = ?");
-        $stmt->bind_param('i', $booking_id);
-        $stmt->execute();
-        $stmt->close();
-        // ─────────────────────────────────────────────────────────────────────
-    }
+// ── Update DB if payment confirmed ────────────────────────────────────────────
+if ($success) {
+    $stmt = $conn->prepare("UPDATE bookings SET payment_status = 'Completed' WHERE id = ? AND user_id = ?");
+    $stmt->bind_param('ii', $booking_id, $user_id);
+    $stmt->execute();
+    $stmt->close();
 }
 
-// Save to session for PDF download
-$_SESSION['khalti_result'] = [
-    'success'    => $success,
-    'booking_id' => $booking_id,
-    'pidx'       => $pidx,
-    'date'       => $date,
-];
+// ── Fetch booking details for invoice ─────────────────────────────────────────
+$stmt = $conn->prepare("
+    SELECT b.*, v.name AS vehicle_name, u.name AS user_name, u.email AS user_email, u.phone_number
+    FROM bookings b
+    JOIN vehicles v ON b.vehicle_id = v.id
+    JOIN users u    ON b.user_id    = u.id
+    WHERE b.id = ? AND b.user_id = ?
+");
+$stmt->bind_param('ii', $booking_id, $user_id);
+$stmt->execute();
+$booking = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
-// ── View ──────────────────────────────────────────────────────────────────────
-$accent     = $success ? '#1ca153'                              : '#cc2e2e';
-$icon       = $success ? '✔'                                    : '✖';
-$heading    = $success ? 'Payment Successful'                   : 'Payment Failed';
-$sub        = $success
-    ? 'Your booking is confirmed. You can download your receipt below.'
-    : 'Your payment could not be processed. Please try again or contact support.';
-$dl_url     = '?pidx=' . urlencode($pidx) . '&download=1';
+if (!$booking) {
+    die("Booking not found.");
+}
 
+$accent = $success ? '#1ca153' : '#cc2e2e';
+$icon   = $success ? '✔'       : '✖';
+$label  = $success ? 'Payment Successful' : 'Payment Failed';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($heading) ?></title>
+    <title><?= htmlspecialchars($label) ?> — Bhatbhatey</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            min-height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            background: #f0f2f5;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            padding: 24px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
         }
-        .card {
-            background: #fff;
+
+        /* ── Status banner ── */
+        .status-card {
+            background: white;
             border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,.10);
-            max-width: 460px; width: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,.07);
+            max-width: 520px;
+            width: 100%;
             overflow: hidden;
         }
-        .card-header {
+        .status-header {
             background: <?= $accent ?>;
-            padding: 36px 32px 28px;
-            text-align: center; color: #fff;
+            padding: 32px;
+            text-align: center;
+            color: white;
         }
-        .icon-circle {
-            width: 64px; height: 64px;
+        .status-icon {
+            width: 60px; height: 60px;
             border-radius: 50%;
-            border: 3px solid rgba(255,255,255,.55);
+            border: 3px solid rgba(255,255,255,.5);
             display: flex; align-items: center; justify-content: center;
-            font-size: 30px; margin: 0 auto 16px;
+            font-size: 26px;
+            margin: 0 auto 14px;
         }
-        .card-header h1 { font-size: 22px; font-weight: 700; }
-        .card-header p  { margin-top: 6px; font-size: 14px; opacity: .88; line-height: 1.5; }
-        .card-body { padding: 28px 32px 32px; }
+        .status-header h2 { font-size: 22px; font-weight: 800; }
+        .status-header p  { font-size: 13px; opacity: .88; margin-top: 5px; }
+        .status-body { padding: 24px 28px; }
         .info-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px;
+            display: flex; justify-content: space-between;
+            padding: 9px 0; border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
         }
         .info-row:last-of-type { border-bottom: none; }
         .info-label { color: #888; font-weight: 500; }
-        .info-value { color: #222; font-weight: 600; text-align: right; max-width: 60%; word-break: break-all; }
-        .actions { display: flex; flex-direction: column; gap: 12px; margin-top: 28px; }
-        .btn {
-            display: block; width: 100%; padding: 13px;
-            border-radius: 10px; font-size: 15px; font-weight: 600;
-            text-align: center; text-decoration: none;
-            border: none; cursor: pointer;
-            transition: opacity .15s, transform .1s;
+        .info-value { font-weight: 700; color: #0f172a; text-align: right; max-width: 60%; word-break: break-all; }
+        .status-actions {
+            display: flex; flex-direction: column; gap: 10px;
+            padding: 0 28px 24px;
         }
-        .btn:active { transform: scale(.98); }
-        .btn-primary { background: <?= $accent ?>; color: #fff; }
-        .btn-primary:hover { opacity: .88; }
+        .btn {
+            display: block; width: 100%; padding: 12px;
+            border-radius: 10px; font-size: 14px; font-weight: 700;
+            text-align: center; text-decoration: none; border: none; cursor: pointer;
+            transition: opacity .15s;
+        }
+        .btn:hover { opacity: .88; }
+        .btn-primary { background: <?= $accent ?>; color: white; }
         .btn-outline { background: transparent; border: 2px solid #d0d0d0; color: #444; }
-        .btn-outline:hover { border-color: #aaa; color: #222; }
+        .btn-outline:hover { border-color: #999; }
+
+        /* ── Invoice ── */
+        .invoice-wrap { max-width: 800px; width: 100%; }
+        .invoice-box {
+            background: white;
+            padding: 50px;
+            box-shadow: 0 0 20px rgba(0,0,0,.05);
+            border-radius: 12px;
+        }
+        .inv-header {
+            display: flex; justify-content: space-between;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 28px; margin-bottom: 28px;
+        }
+        .logo { font-size: 30px; font-weight: 800; color: #f97316; }
+        .inv-title { font-size: 22px; font-weight: 700; color: #64748b; text-align: right; }
+        .info-section { display: flex; justify-content: space-between; margin-bottom: 36px; }
+        .info-block h3 { margin: 0 0 8px; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        .info-block p  { margin: 0 0 4px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 36px; }
+        th { background: #f8fafc; padding: 13px 15px; text-align: left; font-size: 12px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 13px 15px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        .total-section { display: flex; justify-content: flex-end; }
+        .total-box { width: 280px; }
+        .total-row { display: flex; justify-content: space-between; padding: 9px 0; font-size: 14px; }
+        .total-row.grand { border-top: 2px solid #0f172a; font-weight: 800; font-size: 18px; padding-top: 14px; margin-top: 4px; color: #f97316; }
+        .inv-footer { margin-top: 40px; text-align: center; color: #64748b; font-size: 13px; border-top: 1px solid #f1f5f9; padding-top: 18px; }
+
+        .print-actions { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+        .print-btn {
+            background: #0f172a; color: white; border: none;
+            padding: 11px 22px; border-radius: 8px; cursor: pointer;
+            font-family: inherit; font-weight: 700; font-size: 14px;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .back-btn {
+            background: white; color: #0f172a; border: 2px solid #e2e8f0;
+            padding: 11px 22px; border-radius: 8px; cursor: pointer;
+            font-family: inherit; font-weight: 700; font-size: 14px;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+        }
+
+        <?php if ($success): ?>
+        /* Only show invoice on successful payment */
+        .invoice-section { display: block; }
+        <?php else: ?>
+        .invoice-section { display: none; }
+        <?php endif; ?>
+
+        @media print {
+            body { padding: 0; background: white; }
+            .status-card, .print-actions { display: none; }
+            .invoice-box { box-shadow: none; padding: 20px; border-radius: 0; }
+        }
     </style>
 </head>
 <body>
-<div class="card">
 
-    <div class="card-header">
-        <div class="icon-circle"><?= $icon ?></div>
-        <h1><?= htmlspecialchars($heading) ?></h1>
-        <p><?= htmlspecialchars($sub) ?></p>
+<!-- ── Status Card ── -->
+<div class="status-card">
+    <div class="status-header">
+        <div class="status-icon"><?= $icon ?></div>
+        <h2><?= htmlspecialchars($label) ?></h2>
+        <p><?= $success ? 'Your booking is confirmed. See your invoice below.' : 'Payment could not be verified. Please contact support.' ?></p>
     </div>
-
-    <div class="card-body">
-
-        <div class="info-row">
-            <span class="info-label">Date &amp; Time</span>
-            <span class="info-value"><?= htmlspecialchars($date) ?></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Transaction ID</span>
-            <span class="info-value"><?= htmlspecialchars($pidx ?: 'N/A') ?></span>
-        </div>
-
-        <?php if ($success && $booking_id): ?>
+    <div class="status-body">
         <div class="info-row">
             <span class="info-label">Booking ID</span>
-            <span class="info-value">#<?= htmlspecialchars($booking_id) ?></span>
+            <span class="info-value">#<?= str_pad($booking_id, 5, '0', STR_PAD_LEFT) ?></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Transaction ID (pidx)</span>
+            <span class="info-value"><?= htmlspecialchars($pidx) ?></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Amount</span>
+            <span class="info-value">NPR <?= number_format($booking['total_price']) ?></span>
         </div>
         <div class="info-row">
             <span class="info-label">Payment Method</span>
@@ -266,20 +220,92 @@ $dl_url     = '?pidx=' . urlencode($pidx) . '&download=1';
         </div>
         <div class="info-row">
             <span class="info-label">Payment Status</span>
-            <span class="info-value" style="color:<?= $accent ?>">Completed ✔</span>
+            <span class="info-value" style="color:<?= $accent ?>"><?= $success ? 'Completed ✔' : 'Failed ✖' ?></span>
         </div>
+    </div>
+    <div class="status-actions">
+        <?php if ($success): ?>
+        <button class="btn btn-primary" onclick="window.print()">🖨️ Print / Save PDF</button>
         <?php endif; ?>
-
-        <div class="actions">
-            <a class="btn btn-primary" href="<?= htmlspecialchars($dl_url) ?>">
-                ⬇ Download Receipt (PDF)
-            </a>
-            <a class="btn btn-outline" href="../my-bookings.php">
-                ← Go to My Bookings
-            </a>
-        </div>
-
+        <a class="btn btn-outline" href="../my-bookings.php">← Go to My Bookings</a>
     </div>
 </div>
+
+<!-- ── Invoice (only on success) ── -->
+<?php if ($success): ?>
+<div class="invoice-section invoice-wrap">
+    <div class="print-actions">
+        <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+        <a class="back-btn" href="../my-bookings.php">← My Bookings</a>
+    </div>
+
+    <div class="invoice-box">
+        <div class="inv-header">
+            <div>
+                <div class="logo">भटभटे.</div>
+                <div style="color:#64748b;font-size:13px;margin-top:4px;">Nepal's #1 Vehicle Rental Platform</div>
+            </div>
+            <div>
+                <div class="inv-title">TAX INVOICE</div>
+                <div style="font-size:13px;text-align:right;margin-top:6px;">
+                    <strong>Invoice #:</strong> INV-<?= str_pad($booking['id'], 5, '0', STR_PAD_LEFT) ?><br>
+                    <strong>Date:</strong> <?= date('Y-m-d H:i', strtotime($booking['created_at'])) ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-block">
+                <h3>Billed To</h3>
+                <p><strong><?= htmlspecialchars($booking['user_name']) ?></strong></p>
+                <p><?= htmlspecialchars($booking['user_email']) ?></p>
+                <p><?= htmlspecialchars($booking['phone_number']) ?></p>
+            </div>
+            <div class="info-block" style="text-align:right;">
+                <h3>Booking Summary</h3>
+                <p><strong>Status:</strong> <?= ucfirst($booking['status']) ?></p>
+                <p><strong>Payment:</strong> Khalti</p>
+                <p><strong>Payment Status:</strong> <span style="color:#1ca153;font-weight:700;">Completed</span></p>
+                <p style="font-size:12px;color:#94a3b8;margin-top:4px;"><?= htmlspecialchars($pidx) ?></p>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Period</th>
+                    <th>Location</th>
+                    <th style="text-align:right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <strong><?= htmlspecialchars($booking['vehicle_name']) ?></strong><br>
+                        <span style="font-size:12px;color:#64748b;">Vehicle Rental Service</span>
+                    </td>
+                    <td><?= $booking['start_date'] ?> → <?= $booking['end_date'] ?></td>
+                    <td><?= htmlspecialchars($booking['pickup_location'] ?? 'N/A') ?></td>
+                    <td style="text-align:right;">NPR <?= number_format($booking['total_price'], 2) ?></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            <div class="total-box">
+                <div class="total-row"><span>Subtotal:</span><span>NPR <?= number_format($booking['total_price'], 2) ?></span></div>
+                <div class="total-row"><span>Tax (0%):</span><span>NPR 0.00</span></div>
+                <div class="total-row grand"><span>Total Paid:</span><span>NPR <?= number_format($booking['total_price'], 2) ?></span></div>
+            </div>
+        </div>
+
+        <div class="inv-footer">
+            Thank you for choosing Bhatbhatey Rental. Questions? Contact support@bhatbhatey.com.np
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 </body>
 </html>
