@@ -4,7 +4,7 @@ require_once '../includes/connection.php';
 
 // 1. SECURITY CHECK
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'super_admin') {
-    header("Location: superadmin-login.php");
+    header("Location: ../admin/admin-login.php");
     exit();
 }
 
@@ -242,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                         <div class="data-card" style="text-align: center;">
                             <h4 style="margin-top: 0;">Current Image</h4>
-                            <img src="../admin/<?php echo htmlspecialchars($vehicle['image']); ?>" style="width: 100%; border-radius: 0.5rem; margin-bottom: 1rem;">
+                            <img src="../<?php echo htmlspecialchars($vehicle['image']); ?>" style="width: 100%; border-radius: 0.5rem; margin-bottom: 1rem;">
                             <label class="form-label">Change Photo:</label>
                             <input type="file" name="image" accept="image/*">
                         </div>

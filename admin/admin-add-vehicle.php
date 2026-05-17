@@ -21,10 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $availability = isset($_POST['availability']) ? 1 : 0;
 
     $file_path = '';
+    $db_path = '';
 
     // IMAGE UPLOAD LOGIC
     if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-        $upload_dir = 'uploads/';
+        $upload_dir = '../uploads/vehicles/';
+        $db_dir = 'uploads/vehicles/';
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
         }
@@ -39,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $file_name = uniqid('vehicle_', true) . '.' . $file_ext;
             $file_path = $upload_dir . $file_name;
+            $db_path = $db_dir . $file_name;
 
             if (!move_uploaded_file($file_tmp, $file_path)) {
                 $error = 'Failed to upload image';
@@ -68,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $seats,
             $features,
             $description,
-            $file_path,
+            $db_path,
             $availability
         );
 

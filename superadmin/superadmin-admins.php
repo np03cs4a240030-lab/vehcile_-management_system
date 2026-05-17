@@ -2,7 +2,7 @@
 require_once '../config.php';
 
 if (!isLoggedIn() || !isSuperAdmin()) {
-    redirect('../superadmin/superadmin-login.php');
+    redirect('../admin/admin-login.php');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {

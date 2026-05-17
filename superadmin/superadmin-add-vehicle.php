@@ -3,7 +3,7 @@ session_start();
 require_once '../includes/connection.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'super_admin') {
-    header("Location: superadmin-login.php");
+    header("Location: ../admin/admin-login.php");
     exit();
 }
 
@@ -23,9 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $availability = isset($_POST['availability']) ? 1 : 0;
 
     $file_path = '';
+    $db_path = '';
 
     if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-        $upload_dir = 'uploads/vehicles/';
+        $upload_dir = '../uploads/vehicles/';
+        $db_dir = 'uploads/vehicles/';
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
         }
@@ -40,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $file_name = uniqid('vehicle_', true) . '.' . $file_ext;
             $file_path = $upload_dir . $file_name;
+            $db_path = $db_dir . $file_name;
 
             if (!move_uploaded_file($file_tmp, $file_path)) {
                 $error = 'Failed to upload image';
@@ -59,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssdssisssi", $name, $type, $location, $price_per_day, $fuel_type, $transmission, $seats, $features, $description, $file_path, $availability);
+        $stmt->bind_param("sssdssisssi", $name, $type, $location, $price_per_day, $fuel_type, $transmission, $seats, $features, $description, $db_path, $availability);
 
         if ($stmt->execute()) {
             $_SESSION['success'] = "Vehicle added successfully!";

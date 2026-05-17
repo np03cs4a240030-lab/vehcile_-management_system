@@ -11,12 +11,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $allowed    = ['pending', 'approved', 'ongoing', 'completed', 'cancelled'];
     $new_status = in_array($_POST['new_status'], $allowed) ? $_POST['new_status'] : 'pending';
 
-    // Auto-update vehicle availability
-    $r = $conn->query("SELECT vehicle_id FROM bookings WHERE id = $booking_id");
+    // Auto-update vehicle availability + cancel overlapping bookings on approval
+    // Fetch booking being approved
+    $r = $conn->query("SELECT vehicle_id, start_date, end_date, total_days FROM bookings WHERE id = $booking_id");
     if ($r && $row = $r->fetch_assoc()) {
-        $vid = (int)$row['vehicle_id'];
+        $vid        = (int)$row['vehicle_id'];
+        $start_date = $row['start_date'];
+        $total_days = (int)$row['total_days'];
+
+        // Compute real end_date: use stored end_date if valid, else calculate from total_days
+        $end_date = (!empty($row['end_date']) && $row['end_date'] !== '0000-00-00')
+            ? $row['end_date']
+            : date('Y-m-d', strtotime($start_date . ' + ' . $total_days . ' days'));
+
         if (in_array($new_status, ['approved', 'ongoing'])) {
             $conn->query("UPDATE vehicles SET availability = 0 WHERE id = $vid");
+
+            // Cancel all other pending bookings for the same vehicle that overlap these dates
+            // For bookings with broken end_date (0000-00-00), compute from total_days
+            $pending = $conn->query("
+                SELECT id, start_date, end_date, total_days FROM bookings
+                WHERE id != $booking_id
+                  AND vehicle_id = $vid
+                  AND status = 'pending'
+            ");
+            if ($pending) {
+                while ($pb = $pending->fetch_assoc()) {
+                    $pb_start = $pb['start_date'];
+                    $pb_end   = (!empty($pb['end_date']) && $pb['end_date'] !== '0000-00-00')
+                        ? $pb['end_date']
+                        : date('Y-m-d', strtotime($pb_start . ' + ' . (int)$pb['total_days'] . ' days'));
+
+                    // Overlap: approved_start < pending_end AND approved_end > pending_start
+                    if ($start_date < $pb_end && $end_date > $pb_start) {
+                        $pbid = (int)$pb['id'];
+                        $conn->query("UPDATE bookings SET status = 'cancelled' WHERE id = $pbid");
+                    }
+                }
+            }
+
         } elseif (in_array($new_status, ['completed', 'cancelled'])) {
             $conn->query("UPDATE vehicles SET availability = 1 WHERE id = $vid");
         }
@@ -298,9 +331,7 @@ $flash = getFlash('success');
                             <div class="td-secondary"><?php echo $days; ?> days</div>
                         </td>
                         <td>
-                            <?php if (!empty($b['hire_driver'])): ?><span class="addon-pill"><i class="fas fa-user-tie"></i> Driver</span><?php endif; ?>
-                            <?php if (!empty($b['pickup_service'])): ?><span class="addon-pill"><i class="fas fa-van-shuttle"></i> Pickup</span><?php endif; ?>
-                            <?php if (empty($b['hire_driver']) && empty($b['pickup_service'])): ?><span style="color:#94a3b8; font-size:12px;">—</span><?php endif; ?>
+                            <span style="color:#94a3b8; font-size:12px;">—</span>
                         </td>
                         <td style="font-weight:700; color:#f97316; white-space:nowrap;">NPR <?php echo number_format($b['total_price'], 2); ?></td>
                         <td>
@@ -352,11 +383,6 @@ $flash = getFlash('success');
                                         "payment"  => $b["payment_method"],
                                         "total"    => "NPR " . number_format($b["total_price"], 2),
                                         "status"   => ucfirst($b["status"]),
-                                        "driver"   => !empty($b["hire_driver"]) ? "Yes" : "No",
-                                        "pickup"   => !empty($b["pickup_service"]) ? "Yes" : "No",
-                                        "pickup_addr" => $b["pickup_address"] ?? "N/A",
-                                        "drop_addr"   => $b["drop_address"]   ?? "N/A",
-                                        "note"     => $b["special_note"] ?? "—",
                                         "created"  => date("M d, Y", strtotime($b["created_at"])),
                                     ]); ?>)'>
                                     <i class="fas fa-eye"></i> View
@@ -416,11 +442,6 @@ function showDetail(d) {
         ['Start Date', d.start],
         ['End Date', d.end],
         ['Duration', d.days + ' day(s)'],
-        ['Hired Driver', d.driver],
-        ['Pickup/Drop', d.pickup],
-        ['Pickup Address', d.pickup_addr],
-        ['Drop Address', d.drop_addr],
-        ['Special Note', d.note],
         ['Payment', d.payment],
         ['Total', d.total],
         ['Status', d.status],

@@ -42,10 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $availability = isset($_POST['availability']) ? 1 : 0;
 
     $file_path = $vehicle['image']; // Default to old image
+    $db_path = $vehicle['image'];
 
     // IMAGE UPLOAD LOGIC (Only if a new file is selected)
     if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-        $upload_dir = 'uploads/';
+        $upload_dir = '../uploads/vehicles/';
+        $db_dir = 'uploads/vehicles/';
         $file_tmp = $_FILES['image']['tmp_name'];
         $original_name = $_FILES['image']['name'];
         $file_ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
@@ -63,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     unlink($vehicle['image']);
                 }
                 $file_path = $new_file_path;
+                $db_path = $db_dir . $file_name;
             } else {
                 $error = 'Failed to upload new image';
             }
@@ -90,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $seats,
             $features,
             $description,
-            $file_path,
+            $db_path,
             $availability,
             $vehicle_id
         );
@@ -248,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="card"
                             style="background: white; padding: 1.5rem; border-radius: 1rem; text-align: center;">
                             <h4 style="margin-bottom: 1rem;">Current Image</h4>
-                            <img src="<?php echo htmlspecialchars($vehicle['image']); ?>"
+                            <img src="../<?php echo htmlspecialchars($vehicle['image']); ?>"
                                 style="width: 100%; border-radius: 0.5rem; object-fit: cover;">
                         </div>
                     </div>

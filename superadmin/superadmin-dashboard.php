@@ -2,7 +2,7 @@
 require_once '../config.php';
 
 if (!isLoggedIn() || !isSuperAdmin()) {
-    redirect('../superadmin/superadmin-login.php');
+    redirect('../admin/admin-login.php');
 }
 
 $total_users    = $conn->query("SELECT COUNT(*) AS c FROM users WHERE role='user'")->fetch_assoc()['c'];

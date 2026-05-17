@@ -2,7 +2,7 @@
 require_once '../config.php';
 
 if (!isLoggedIn() || !isSuperAdmin()) {
-    redirect('../superadmin/superadmin-login.php');
+    redirect('../admin/admin-login.php');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -10,12 +10,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $allowed    = ['pending', 'approved', 'ongoing', 'completed', 'cancelled'];
     $new_status = in_array($_POST['new_status'], $allowed) ? $_POST['new_status'] : 'pending';
 
-    $r = $conn->query("SELECT vehicle_id FROM bookings WHERE id = $booking_id");
+    // Fetch booking being approved
+    $r = $conn->query("SELECT vehicle_id, start_date, end_date, total_days FROM bookings WHERE id = $booking_id");
     if ($r && $row = $r->fetch_assoc()) {
-        $vid = (int)$row['vehicle_id'];
-        if (in_array($new_status, ['approved','ongoing'])) {
+        $vid        = (int)$row['vehicle_id'];
+        $start_date = $row['start_date'];
+        $total_days = (int)$row['total_days'];
+
+        // Compute real end_date: use stored end_date if valid, else calculate from total_days
+        $end_date = (!empty($row['end_date']) && $row['end_date'] !== '0000-00-00')
+            ? $row['end_date']
+            : date('Y-m-d', strtotime($start_date . ' + ' . $total_days . ' days'));
+
+        if (in_array($new_status, ['approved', 'ongoing'])) {
             $conn->query("UPDATE vehicles SET availability = 0 WHERE id = $vid");
-        } elseif (in_array($new_status, ['completed','cancelled'])) {
+
+            // Cancel all other pending bookings for the same vehicle that overlap these dates
+            // For bookings with broken end_date (0000-00-00), compute from total_days
+            $pending = $conn->query("
+                SELECT id, start_date, end_date, total_days FROM bookings
+                WHERE id != $booking_id
+                  AND vehicle_id = $vid
+                  AND status = 'pending'
+            ");
+            if ($pending) {
+                while ($pb = $pending->fetch_assoc()) {
+                    $pb_start = $pb['start_date'];
+                    $pb_end   = (!empty($pb['end_date']) && $pb['end_date'] !== '0000-00-00')
+                        ? $pb['end_date']
+                        : date('Y-m-d', strtotime($pb_start . ' + ' . (int)$pb['total_days'] . ' days'));
+
+                    // Overlap: approved_start < pending_end AND approved_end > pending_start
+                    if ($start_date < $pb_end && $end_date > $pb_start) {
+                        $pbid = (int)$pb['id'];
+                        $conn->query("UPDATE bookings SET status = 'cancelled' WHERE id = $pbid");
+                    }
+                }
+            }
+
+        } elseif (in_array($new_status, ['completed', 'cancelled'])) {
             $conn->query("UPDATE vehicles SET availability = 1 WHERE id = $vid");
         }
     }
@@ -272,9 +305,7 @@ $flash = getFlash('success');
                             <div class="td-secondary"><?php echo $b['total_days'] ?? '—'; ?> days</div>
                         </td>
                         <td>
-                            <?php if (!empty($b['hire_driver'])): ?><span class="addon-pill"><i class="fas fa-user-tie"></i> Driver</span><?php endif; ?>
-                            <?php if (!empty($b['pickup_service'])): ?><span class="addon-pill"><i class="fas fa-van-shuttle"></i> Pickup</span><?php endif; ?>
-                            <?php if (empty($b['hire_driver']) && empty($b['pickup_service'])): ?><span style="color:#475569; font-size:12px;">—</span><?php endif; ?>
+                            <span style="color:#475569; font-size:12px;">—</span>
                         </td>
                         <td style="font-weight:700; color:#fbbf24; white-space:nowrap;">NPR <?php echo number_format($b['total_price'], 2); ?></td>
                         <td>
@@ -321,8 +352,6 @@ $flash = getFlash('success');
                                     "start"    => date("M d, Y", strtotime($b["start_date"])),
                                     "end"      => date("M d, Y", strtotime($b["end_date"])),
                                     "days"     => $b["total_days"] ?? "—",
-                                    "driver"   => !empty($b["hire_driver"]) ? "Yes" : "No",
-                                    "pickup"   => !empty($b["pickup_service"]) ? "Yes" : "No",
                                     "payment"  => $b["payment_method"],
                                     "total"    => "NPR ".number_format($b["total_price"], 2),
                                     "status"   => ucfirst($b["status"]),
@@ -365,7 +394,7 @@ function updateStatus(bookingId, newStatus, sel) {
     document.body.appendChild(f); f.submit();
 }
 function showDetail(d) {
-    const rows = [['Booking ID',d.id],['Customer',d.customer],['Email',d.email],['Vehicle',d.vehicle],['Start Date',d.start],['End Date',d.end],['Duration',d.days+' day(s)'],['Hired Driver',d.driver],['Pickup/Drop',d.pickup],['Payment',d.payment],['Total',d.total],['Status',d.status],['Booked On',d.created]];
+    const rows = [['Booking ID',d.id],['Customer',d.customer],['Email',d.email],['Vehicle',d.vehicle],['Start Date',d.start],['End Date',d.end],['Duration',d.days+' day(s)'],['Payment',d.payment],['Total',d.total],['Status',d.status],['Booked On',d.created]];
     document.getElementById('modalContent').innerHTML = rows.map(([l,v])=>`<div class="modal-detail-row"><span class="modal-label">${l}</span><span class="modal-value">${v}</span></div>`).join('');
     document.getElementById('detailModal').classList.add('open');
 }

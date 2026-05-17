@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $startDate = $_POST['start_date'] ?? '';
     $endDate = $_POST['end_date'] ?? '';
-    $paymentMethod = $_POST['payment_method'] ?? 'Cash on Pickup';
+    $paymentMethod = $_POST['payment_method'] ?? 'cash';
 
     if (!$startDate || !$endDate) {
         $error = "Please select dates";
@@ -67,11 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Invalid date range";
         } else {
 
-            // CHECK OVERLAPPING BOOKINGS
+            // CHECK OVERLAPPING BOOKINGS — only block if already approved/ongoing
             $check = $conn->prepare("
                 SELECT id FROM bookings 
                 WHERE vehicle_id = ?
-                AND status = 'confirmed'
+                AND status IN ('approved','confirmed','ongoing')
                 AND start_date < ?
                 AND end_date > ?
             ");
@@ -87,25 +87,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $check->get_result();
 
             if ($result->num_rows > 0) {
-                $error = "Vehicle already booked for selected dates";
+                $error = "Vehicle is already booked for those dates. Please choose different dates.";
             } else {
 
                 // CALCULATE PRICE
                 $totalCost = $days * $vehicle['price_per_day'];
 
-                //  INSERT BOOKING (FIXED COLUMNS)
+                // INSERT BOOKING — status starts as 'pending', admin must approve
                 $stmt = $conn->prepare("
     INSERT INTO bookings 
-    (user_id, vehicle_id, start_date, end_date, total_price, payment_method, status, pickup_location, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, 'confirmed', ?, NOW())
+    (user_id, vehicle_id, start_date, end_date, total_days, total_price, payment_method, status, pickup_location, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, NOW())
 ");
 
                 $stmt->bind_param(
-                    "iissdss",
+                    "iisiidss",
                     $currentUser['id'],
                     $vehicleId,
                     $startDate,
                     $endDate,
+                    $days,
                     $totalCost,
                     $paymentMethod,
                     $vehicle['location']
@@ -118,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $userEmail = $currentUser['email'];
                     $userName  = $currentUser['name'];
 
-                    $emailSubject = "Booking Confirmed – {$vehicle['name']} | Bhatbhatey Rental";
+                    $emailSubject = "Booking Received – {$vehicle['name']} | Bhatbhatey Rental";
                     $durationLabel = $days . ' day' . ($days > 1 ? 's' : '');
                     $pickupFormatted = date('F j, Y', strtotime($startDate));
                     $returnFormatted = date('F j, Y', strtotime($endDate));
@@ -126,11 +127,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $yearNow         = date('Y');
 
                     $emailBody = "
-<h2>Booking Confirmed </h2>
+<h2>Booking Request Received</h2>
 
 <p>Hi <strong>{$userName}</strong>,</p>
 
-<p>Your booking has been successfully confirmed.</p>
+<p>Your booking request has been submitted successfully. It is currently <strong>pending admin approval</strong>. You will be notified once it is approved.</p>
 
 <hr>
 
@@ -141,17 +142,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <p><strong>Duration:</strong> {$durationLabel}</p>
 <p><strong>Payment Method:</strong> {$paymentMethod}</p>
 <p><strong>Total Price:</strong> {$totalFormatted}</p>
+<p><strong>Status:</strong> Pending Approval</p>
 
 <hr>
 
 <p>Thank you for using <strong>Bhatbhatey Rental</strong>.</p>
-<p>We look forward to serving you again.</p>
+<p>We will review your booking and confirm it shortly.</p>
 ";
 
                     sendMail($userEmail, $emailSubject, $emailBody);
                      
 
-                    redirect('my-bookings.php?success=1');
+                    redirect('booking-confirmation.php?id=' . $bookingId . '&new=1');
                 } else {
                     $error = "Booking failed";
                 }
@@ -199,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <!-- Vehicle Details -->
                     <div>
                         <div class="vehicle-card">
-                            <img src="admin/<?php echo htmlspecialchars($vehicle['image']); ?>" 
+                            <img src="<?php echo htmlspecialchars($vehicle['image']); ?>" 
                                     alt="<?php echo htmlspecialchars($vehicle['name']); ?>"
                                     style="width:100%; height:400px; object-fit:cover; object-position:center; border-radius:12px;">
                             
@@ -294,7 +296,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                                     <div class="form-group">
                                         <label>📅 End Date</label>
-                                        <input type="date" name="end_date" id="endDate" class="form-control" required>
+                                        <input type="date" name="end_date" id="endDate" class="form-control" required min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>">
                                     </div>
 
                                     <div id="costSummary"
@@ -312,8 +314,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="form-group">
                                         <label>Payment Method</label>
                                         <select name="payment_method" class="form-control">
-                                            <option value="Cash on Pickup">Cash on Pickup</option>
-                                            <option value="Online Payment">Online Payment</option>
+                                            <option value="cash">Cash on Pickup</option>
+                                            <option value="online">Online Payment</option>
                                         </select>
                                     </div>
 
@@ -336,7 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="vehicle-content">
 
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-                            <h3 style="font-size: 22px; margin: 0;">⭐ Customer Reviews</h3>
+                            <h3 style="font-size: 22px; margin: 0;"> Customer Reviews</h3>
                             <?php if ($totalReviews > 0): ?>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <div style="font-size: 28px; font-weight: 700; color: var(--brand-orange);">

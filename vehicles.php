@@ -222,7 +222,7 @@ $locations_result = $conn->query("SELECT DISTINCT location FROM vehicles ORDER B
 
                         <!-- Image -->
                         <div class="card-img-wrap" style="position: relative; overflow: hidden; height: 13rem;">
-                            <img src="admin/<?php echo htmlspecialchars($vehicle['image']); ?>"
+                            <img src="<?php echo htmlspecialchars($vehicle['image']); ?>"
                                 alt="<?php echo htmlspecialchars($vehicle['name']); ?>"
                                 style="width: 100%; height: 100%; object-fit: cover;">
 

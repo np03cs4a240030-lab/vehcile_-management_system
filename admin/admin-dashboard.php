@@ -336,7 +336,7 @@ while ($r = $vehicleRentalTrend->fetch_assoc()) {
             </div>
         </div>
         <div class="card">
-            <div class="card-header"><i class="fas fa-chart-pie"></i> Fleet Overview</div>
+            <div class="card-header"><i class="fas fa-chart-pie"></i> Vehicle Overview</div>
             <div class="card-body">
                 <canvas id="fleetChart" height="140"></canvas>
                 <div style="margin-top:16px;">

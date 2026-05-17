@@ -32,11 +32,6 @@ if (!$vehicle) {
 $startDate     = $_POST['start_date']     ?? '';
 $endDate       = $_POST['end_date']       ?? '';
 $paymentMethod = $_POST['payment_method'] ?? 'Cash on Pickup';
-$hireDriver    = isset($_POST['hire_driver']) ? 1 : 0;
-$pickupService = isset($_POST['pickup_service']) ? 1 : 0;
-$pickupAddress = sanitize($_POST['pickup_address'] ?? '');
-$dropAddress   = sanitize($_POST['drop_address']   ?? '');
-$specialNote   = sanitize($_POST['special_note']   ?? '');
 
 // --- Validation ---
 if (!$startDate || !$endDate) {
@@ -61,42 +56,33 @@ if ($days > 90) {
     redirect('vehicle-details.php?id=' . $vehicleId . '&error=Maximum+booking+duration+is+90+days');
 }
 
-// Check overlapping bookings (pending, approved, confirmed, ongoing)
+// Check overlapping approved/ongoing bookings — block if vehicle already confirmed for these dates
 $check = $conn->prepare("
     SELECT id FROM bookings
     WHERE vehicle_id = ?
-    AND status IN ('pending','approved','confirmed','ongoing')
-    AND (
-        (start_date <= ? AND end_date >= ?) OR
-        (start_date <= ? AND end_date >= ?) OR
-        (start_date >= ? AND end_date <= ?)
-    )
+    AND status IN ('approved','confirmed','ongoing')
+    AND start_date < ?
+    AND end_date > ?
 ");
-$check->bind_param("issssss", $vehicleId, $endDate, $startDate, $endDate, $endDate, $startDate, $endDate);
+$check->bind_param("iss", $vehicleId, $endDate, $startDate);
 $check->execute();
 
 if ($check->get_result()->num_rows > 0) {
-    redirect('vehicle-details.php?id=' . $vehicleId . '&error=Vehicle+is+already+booked+for+those+dates');
+    redirect('vehicle-details.php?id=' . $vehicleId . '&error=Vehicle+is+not+available+for+those+dates');
 }
 
-// Calculate total cost (driver adds NPR 1500/day, pickup service flat NPR 500)
+// Calculate total cost
 $totalCost = $days * $vehicle['price_per_day'];
-if ($hireDriver)    $totalCost += $days * 1500;
-if ($pickupService) $totalCost += 500;
 
-// Sprint 2: bookings now start as 'pending' — admin must approve
-$initialStatus = 'pending';
-
-// Insert booking
+// Insert booking — status starts as pending
 $insert = $conn->prepare("
     INSERT INTO bookings
     (user_id, vehicle_id, start_date, end_date, total_days, total_price,
-     payment_method, status, pickup_location, hire_driver, pickup_service,
-     pickup_address, drop_address, special_note, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+     payment_method, status, pickup_location, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, NOW())
 ");
 $insert->bind_param(
-    "iissiidssiisss",
+    "iisiidss",
     $currentUser['id'],
     $vehicleId,
     $startDate,
@@ -104,13 +90,7 @@ $insert->bind_param(
     $days,
     $totalCost,
     $paymentMethod,
-    $initialStatus,
-    $vehicle['location'],
-    $hireDriver,
-    $pickupService,
-    $pickupAddress,
-    $dropAddress,
-    $specialNote
+    $vehicle['location']
 );
 
 if (!$insert->execute()) {
@@ -135,4 +115,4 @@ if (function_exists('sendBookingConfirmation')) {
 }
 
 // Redirect to booking confirmation
-redirect('booking-confirmation.php?id=' . $bookingId);
+redirect('booking-confirmation.php?id=' . $bookingId . '&new=1');
