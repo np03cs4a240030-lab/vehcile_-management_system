@@ -9,9 +9,9 @@ $currentUser = getCurrentUser();
 
 // REVIEW SUBMISSION
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['review_submit'])) {
-    $vehicle_id = (int)$_POST['vehicle_id'];
-    $user_id    = $currentUser['id'];
-    $rating     = (int)$_POST['rating'];
+    $vehicle_id = (int) $_POST['vehicle_id'];
+    $user_id = $currentUser['id'];
+    $rating = (int) $_POST['rating'];
     $review_text = $_POST['review_text'];
 
     $stmt_rev = $conn->prepare("INSERT INTO reviews (vehicle_id, user_id, rating, review_text) VALUES (?, ?, ?, ?)");
@@ -288,12 +288,7 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         }
 
         /* Flash */
-<<<<<<< HEAD
-        .flash{padding:13px 18px;border-radius:10px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;}
-        /* .flash {
-=======
         .flash {
->>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
             padding: 13px 18px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -302,15 +297,20 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             gap: 10px;
             font-size: 14px;
             font-weight: 600;
+        }
+
+        .flash-success {
             background: #d1fae5;
             color: #065f46;
             border: 1px solid #6ee7b7;
-<<<<<<< HEAD
-        } */
-=======
         }
 
->>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
+        .flash-review {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
         /* Filter tabs */
         .filter-tabs {
             display: flex;
@@ -398,7 +398,6 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             display: flex;
             gap: 6px;
         }
-<<<<<<< HEAD
 
         .addon-tag {
             display: inline-flex;
@@ -413,188 +412,6 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             border: 1px solid #fed7aa;
         }
 
-        .b-body {
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 130px 1fr;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .b-img {
-            width: 100%;
-            height: 90px;
-            object-fit: cover;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-        }
-
-        .b-img-fallback {
-            width: 100%;
-            height: 90px;
-            border-radius: 10px;
-            background: #f1f5f9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #94a3b8;
-            font-size: 28px;
-        }
-
-        .b-vehicle-name {
-            font-size: 17px;
-            font-weight: 800;
-            color: var(--dark);
-            margin-bottom: 3px;
-        }
-
-        .b-vehicle-type {
-            font-size: 12px;
-            color: var(--slate);
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .b-meta {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .meta-label {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-bottom: 3px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .meta-value {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--dark);
-        }
-
-        .b-foot {
-            padding: 13px 20px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .b-foot-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .foot-meta span {
-            font-size: 11px;
-            color: #94a3b8;
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        .foot-meta p {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .foot-meta p i {
-            color: #94a3b8;
-            font-size: 11px;
-        }
-
-        .b-price {
-            font-size: 17px;
-            font-weight: 800;
-            color: var(--primary);
-        }
-
-        .b-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 11px;
-            border-radius: 100px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .sp-pending {
-            background: #fef9c3;
-            color: #ca8a04;
-        }
-
-        .sp-approved,
-        .sp-confirmed {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .sp-ongoing {
-            background: #fce7f3;
-            color: #be185d;
-        }
-
-        .sp-completed {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .sp-cancelled {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-=======
->>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
-
-        .addon-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 3px 10px;
-            border-radius: 100px;
-            font-size: 11px;
-            font-weight: 700;
-            background: var(--primary-light);
-            color: #c2410c;
-            border: 1px solid #fed7aa;
-        }
-
-<<<<<<< HEAD
-        .btn-pay {
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 700;
-            background: #2563eb;
-            color: white;
-            border: 1px solid #2563eb;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.2s;
-        }
-
-=======
         .b-body {
             padding: 20px;
             display: grid;
@@ -783,24 +600,131 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             background: #dbeafe;
         }
 
-        .btn-pay {
+        /* REVIEW */
+        .review-section {
+            padding: 0 20px 16px;
+        }
+
+        .btn-review {
             padding: 8px 16px;
-            border-radius: 10px;
+            border-radius: 9px;
             font-size: 13px;
             font-weight: 700;
-            background: #2563eb;
-            color: white;
-            border: 1px solid #2563eb;
+            background: #eff6ff;
+            color: #3b82f6;
+            border: 1px solid #bfdbfe;
+            cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: 0.2s;
         }
 
->>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
-        .btn-pay:hover {
-            background: #1d4ed8;
-            border-color: #1d4ed8;
+        .btn-review:hover {
+            background: #dbeafe;
+        }
+
+        .review-box {
+            margin-top: 14px;
+            padding: 18px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .review-box-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            font-size: 22px;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+
+        .star-rating input:checked~label,
+        .star-rating label:hover,
+        .star-rating label:hover~label {
+            color: #f59e0b;
+        }
+
+        .review-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            font-size: 13px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            resize: vertical;
+            min-height: 80px;
+            color: var(--dark);
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .review-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .review-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn-post {
+            padding: 8px 18px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 700;
+            background: #10b981;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+
+        .btn-post:hover {
+            background: #059669;
+        }
+
+        .btn-discard {
+            padding: 8px 14px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 700;
+            background: #f1f5f9;
+            color: var(--slate);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-discard:hover {
+            background: #e2e8f0;
         }
 
         .empty-state {
@@ -833,6 +757,44 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         .empty-state p {
             color: var(--slate);
             font-size: 14px;
+        }
+
+        /* Booking Action Buttons */
+        .booking-action-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Khalti Button */
+        .btn-khalti {
+            padding: 7px 14px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 700;
+            background: #5C2D91;
+            color: white;
+            border: 1px solid #5C2D91;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-khalti:hover {
+            background: #4c2577;
+            border-color: #4c2577;
+            transform: translateY(-1px);
+        }
+
+        /* Better button alignment */
+        .b-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .btn-browse {
@@ -872,7 +834,6 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 <span class="lt-sub">Rental</span>
             </div>
         </a>
-<<<<<<< HEAD
 
         <div class="sidebar-nav">
             <div class="nav-section-label">Main</div>
@@ -892,119 +853,6 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 <div class="user-info-inner">
                     <div class="u-name"><?php echo htmlspecialchars($currentUser['name'] ?? 'User'); ?></div>
                     <div class="u-badge"><i class="fas fa-circle"></i> Active Member</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="main">
-        <div class="page-header">
-            <h1>My Bookings</h1>
-            <p>Track and manage your vehicle rental history</p>
-        </div>
-
-    <?php if(isset($_GET['msg']) && $_GET['msg']==='cancelled'): ?>
-    <div class="flash"><i class="fas fa-circle-check"></i> Booking cancelled successfully.</div>
-    <?php endif; ?>
-
-        <div class="filter-tabs">
-            <?php
-            $tabs = [
-                'all' => ['icon' => 'fa-list', 'label' => 'All', 'count' => $totalCount],
-                'pending' => ['icon' => 'fa-clock', 'label' => 'Pending', 'count' => $counts['pending'] ?? 0],
-                'approved' => ['icon' => 'fa-circle-check', 'label' => 'Approved', 'count' => ($counts['approved'] ?? 0) + ($counts['confirmed'] ?? 0)],
-                'ongoing' => ['icon' => 'fa-car-side', 'label' => 'Ongoing', 'count' => $counts['ongoing'] ?? 0],
-                'completed' => ['icon' => 'fa-flag-checkered', 'label' => 'Completed', 'count' => $counts['completed'] ?? 0],
-                'cancelled' => ['icon' => 'fa-ban', 'label' => 'Cancelled', 'count' => $counts['cancelled'] ?? 0],
-            ];
-            foreach ($tabs as $key => $tab): ?>
-                <a href="?status=<?php echo $key; ?>" class="filter-tab <?php echo $filter === $key ? 'active' : ''; ?>">
-                    <i class="fas <?php echo $tab['icon']; ?>"></i>
-                    <?php echo $tab['label']; ?>
-                    <span class="tab-count"><?php echo $tab['count']; ?></span>
-                </a>
-            <?php endforeach; ?>
-        </div>
-=======
->>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
-
-        <div class="sidebar-nav">
-            <div class="nav-section-label">Main</div>
-            <a href="user/user-dashboard.php"><i class="fas fa-gauge-high"></i> Dashboard</a>
-            <a href="vehicles.php"><i class="fas fa-car"></i> Browse Vehicles</a>
-            <a href="my-bookings.php" class="active"><i class="fas fa-calendar-check"></i> My Bookings</a>
-            <div class="nav-section-label">Account</div>
-            <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
-            <a href="logout.php" class="danger"><i class="fas fa-right-from-bracket"></i> Logout</a>
-        </div>
-
-        <div class="sidebar-footer">
-            <div class="user-card">
-                <div class="user-initials">
-                    <?php echo strtoupper(substr($currentUser['name'] ?? 'U', 0, 2)); ?>
-                </div>
-<<<<<<< HEAD
-                <span class="status-pill sp-<?php echo $st; ?>">
-                    <i class="fas <?php echo $si; ?>"></i> <?php echo ucfirst($st); ?>
-                </span>
-            </div>
-
-                    <div class="b-body">
-                        <?php if (!empty($b['vehicle_image'])): ?>
-                            <img src="<?php echo htmlspecialchars($b['vehicle_image']); ?>"
-                                alt="<?php echo htmlspecialchars($b['vehicle_name']); ?>" class="b-img"
-                                onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                            <div class="b-img-fallback" style="display:none;"><i class="fas fa-car"></i></div>
-                        <?php else: ?>
-                            <div class="b-img-fallback"><i class="fas fa-car"></i></div>
-                        <?php endif; ?>
-
-                <div>
-                    <div class="b-vehicle-name"><?php echo htmlspecialchars($b['vehicle_name']); ?></div>
-                    <div class="b-vehicle-type"><i class="fas <?php echo $ti; ?>"></i> <?php echo htmlspecialchars($b['vehicle_type']); ?></div>
-                    <div class="b-meta">
-                        <div>
-                            <div class="meta-label"><i class="fas fa-calendar"></i> Rental Period</div>
-                            <div class="meta-value"><?php echo date('M d',strtotime($b['start_date'])); ?> <i class="fas fa-arrow-right" style="font-size:10px;color:#94a3b8;"></i> <?php echo date('M d, Y',strtotime($b['end_date'])); ?></div>
-                        </div>
-                        <div>
-                            <div class="meta-label"><i class="fas fa-clock"></i> Duration</div>
-                            <div class="meta-value"><?php echo $days; ?> day<?php echo $days>1?'s':''; ?></div>
-                        </div>
-                        <div>
-                            <div class="meta-label"><i class="fas fa-map-pin"></i> Pickup</div>
-                            <div class="meta-value"><?php echo htmlspecialchars($b['pickup_location'] ?? $b['vehicle_location'] ?? 'N/A'); ?></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="b-foot">
-                <div class="b-foot-left">
-                    <div class="foot-meta">
-                        <span>Payment</span>
-                        <p><i class="fas fa-<?php echo strtolower($b['payment_method'])==='online'?'credit-card':'money-bill-wave'; ?>"></i> <?php echo htmlspecialchars($b['payment_method']); ?></p>
-                    </div>
-                    <div class="foot-meta">
-                        <span>Booked on</span>
-                        <p><i class="fas fa-calendar-plus"></i> <?php echo date('M d, Y',strtotime($b['created_at'])); ?></p>
-                    </div>
-                </div>
-                <div class="b-actions">
-                    <span class="b-price">NPR <?php echo number_format($b['total_price']); ?></span>
-                    <?php if($st==='pending'): ?>
-                    <form method="POST" onsubmit="return confirm('Cancel this booking?');">
-                        <input type="hidden" name="action" value="cancel_booking">
-                        <input type="hidden" name="booking_id" value="<?php echo $b['id']; ?>">
-                        <button type="submit" class="btn-cancel"><i class="fas fa-xmark"></i> Cancel</button>
-                    </form>
-                    <?php endif; ?>
-                    <a href="booking-confirmation.php?id=<?php echo $b['id']; ?>" class="btn-view-b"><i class="fas fa-eye"></i> View</a>
-=======
-                <div class="user-info-inner">
-                    <div class="u-name"><?php echo htmlspecialchars($currentUser['name'] ?? 'User'); ?></div>
-                    <div class="u-badge"><i class="fas fa-circle"></i> Active Member</div>
->>>>>>> 76541ae5f6c63ccf391950627e94599e97cb5d44
                 </div>
             </div>
         </div>
@@ -1017,7 +865,18 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         </div>
 
         <?php if (isset($_GET['msg']) && $_GET['msg'] === 'cancelled'): ?>
-            <div class="flash"><i class="fas fa-circle-check"></i> Booking cancelled successfully.</div>
+            <div class="flash flash-success"><i class="fas fa-circle-check"></i> Booking cancelled successfully.</div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['msg']) && $_GET['msg'] === 'booking_pending'): ?>
+            <div class="flash flash-review" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;"><i
+                    class="fas fa-clock"></i> Booking submitted! It is <strong>pending admin approval</strong>. You'll be
+                notified once approved.</div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['msg']) && $_GET['msg'] === 'review_success'): ?>
+            <div class="flash flash-review"><i class="fas fa-star"></i> Your review has been posted. Thank you for sharing
+                your experience!</div>
         <?php endif; ?>
 
         <div class="filter-tabs">
@@ -1051,14 +910,10 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 <div class="b-card">
                     <div class="b-head">
                         <div style="display:flex;align-items:center;gap:10px;">
-                            <div class="b-id"><i class="fas fa-hashtag"></i><?php echo str_pad($b['id'], 5, '0', STR_PAD_LEFT); ?>
+                            <div class="b-id"><i
+                                    class="fas fa-hashtag"></i><?php echo str_pad($b['id'], 5, '0', STR_PAD_LEFT); ?>
                             </div>
-                            <div class="addons">
-                                <?php if (!empty($b['hire_driver'])): ?><span class="addon-tag"><i class="fas fa-user-tie"></i>
-                                        Driver</span><?php endif; ?>
-                                <?php if (!empty($b['pickup_service'])): ?><span class="addon-tag"><i
-                                            class="fas fa-van-shuttle"></i> Pickup/Drop</span><?php endif; ?>
-                            </div>
+                            <div class="addons"></div>
                         </div>
                         <span class="status-pill sp-<?php echo $st; ?>">
                             <i class="fas <?php echo $si; ?>"></i> <?php echo ucfirst($st); ?>
@@ -1091,7 +946,7 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                     <div class="meta-value"><?php echo $days; ?> day<?php echo $days > 1 ? 's' : ''; ?></div>
                                 </div>
                                 <div>
-                                    <div class="meta-label"><i class="fas fa-map-pin"></i> Pickup</div>
+                                    <div class="meta-label"><i class="fas fa-map-pin"></i> Vehicle Location</div>
                                     <div class="meta-value">
                                         <?php echo htmlspecialchars($b['pickup_location'] ?? $b['vehicle_location'] ?? 'N/A'); ?>
                                     </div>
@@ -1105,12 +960,8 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                             <div class="foot-meta">
                                 <span>Payment</span>
                                 <p><i
-                                        class="fas fa-<?php echo strtolower($b['payment_method']) === 'online payment' ? 'credit-card' : 'money-bill-wave'; ?>"></i>
+                                        class="fas fa-<?php echo strtolower($b['payment_method']) === 'online' ? 'credit-card' : 'money-bill-wave'; ?>"></i>
                                     <?php echo htmlspecialchars($b['payment_method']); ?></p>
-                            </div>
-                            <div class="foot-meta">
-                                <span>Total</span>
-                                <p class="b-price">NPR <?php echo number_format($b['total_price']); ?></p>
                             </div>
                             <div class="foot-meta">
                                 <span>Booked on</span>
@@ -1120,34 +971,83 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                         </div>
                         <div class="b-actions">
 
-                            <?php if (
-                                strtolower($b['payment_method']) === 'online' &&
-                                strtolower($b['status']) === 'pending'
-                            ): ?>
+                            <span class="b-price">
+                                NPR <?php echo number_format($b['total_price']); ?>
+                            </span>
 
-                                <form action="khalti/initiate.php" method="POST">
+                            <?php if ($st === 'pending'): ?>
+                                <div class="booking-action-group">
 
-                                    <input type="hidden" name="booking_id" value="<?php echo $b['id']; ?>">
+                                    <!-- Cancel Booking -->
+                                    <form method="POST" onsubmit="return confirm('Cancel this booking?');" style="margin:0;">
 
-                                    <input type="hidden" name="vehicle_name"
-                                        value="<?php echo htmlspecialchars($b['vehicle_name']); ?>">
+                                        <input type="hidden" name="action" value="cancel_booking">
+                                        <input type="hidden" name="booking_id" value="<?php echo $b['id']; ?>">
 
-                                    <!-- Amount in paisa -->
-                                    <input type="hidden" name="amount" value="<?php echo ((float) $b['total_price']) * 100; ?>">
+                                        <button type="submit" class="btn-cancel">
+                                            <i class="fas fa-xmark"></i>
+                                            Cancel
+                                        </button>
+                                    </form>
 
-                                    <button type="submit" class="btn-pay">
+                                    <!-- Khalti Payment -->
+                                    <button type="button" class="btn-khalti"
+                                        onclick="window.location.href='esewa/initiate.php?booking_id=<?= $b['id'] ?>&amount=<?= $b['total_price'] ?>'">
 
-                                        <i class="fas fa-money-check-dollar"></i>
-                                        Pay with Khalti
-
+                                        <i class="fas fa-wallet"></i>
+                                        Pay with esewa
                                     </button>
 
-                                </form>
-
+                                </div>
                             <?php endif; ?>
+
+                            <!-- View Booking -->
+                            <a href="booking-confirmation.php?id=<?php echo $b['id']; ?>" class="btn-view-b">
+                                <i class="fas fa-eye"></i>
+                                View
+                            </a>
 
                         </div>
                     </div>
+
+                    <?php if ($st === 'completed' || $st === 'confirmed'): ?>
+                        <div class="review-section">
+                            <button type="button" class="btn-review" id="btn-review-<?php echo $b['id']; ?>"
+                                onclick="toggleReview(<?php echo $b['id']; ?>)">
+                                <i class="fas fa-star"></i> Write a Review
+                            </button>
+
+                            <div id="review-<?php echo $b['id']; ?>" class="review-box" style="display:none;">
+                                <div class="review-box-title"><i class="fas fa-star" style="color:#f59e0b;"></i> Rate your
+                                    experience</div>
+                                <form method="POST">
+                                    <input type="hidden" name="vehicle_id" value="<?php echo $b['vehicle_id']; ?>">
+
+                                    <div class="star-rating">
+                                        <?php for ($i = 5; $i >= 1; $i--): ?>
+                                            <input type="radio" name="rating" id="star<?php echo $b['id'] . '_' . $i; ?>"
+                                                value="<?php echo $i; ?>" <?php echo $i === 5 ? 'required' : ''; ?>>
+                                            <label for="star<?php echo $b['id'] . '_' . $i; ?>"
+                                                title="<?php echo $i; ?> star<?php echo $i > 1 ? 's' : ''; ?>">&#9733;</label>
+                                        <?php endfor; ?>
+                                    </div>
+
+                                    <textarea name="review_text" class="review-textarea" required
+                                        placeholder="Tell us about your rental experience..."></textarea>
+
+                                    <div class="review-btns">
+                                        <button type="submit" name="review_submit" class="btn-post">
+                                            <i class="fas fa-paper-plane"></i> Post Review
+                                        </button>
+                                        <button type="button" class="btn-discard" onclick="toggleReview(<?php echo $b['id']; ?>)">
+                                            Discard
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                 </div>
             <?php endforeach; ?>
 
@@ -1163,6 +1063,16 @@ $userBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             </div>
         <?php endif; ?>
     </div>
+
+    <script>
+        function toggleReview(id) {
+            const box = document.getElementById('review-' + id);
+            const btn = document.getElementById('btn-review-' + id);
+            const isHidden = box.style.display === 'none';
+            box.style.display = isHidden ? 'block' : 'none';
+            btn.style.display = isHidden ? 'none' : 'inline-flex';
+        }
+    </script>
 
 </body>
 

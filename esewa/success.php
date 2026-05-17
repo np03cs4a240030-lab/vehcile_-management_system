@@ -1,0 +1,347 @@
+<?php
+
+require_once '../config.php';
+
+if (!isLoggedIn()) {
+    redirect('../login.php');
+}
+
+$user_id = $_SESSION['user_id'];
+
+/*
+|--------------------------------------------------------------------------
+| Decode eSewa Response
+|--------------------------------------------------------------------------
+*/
+
+if (!isset($_GET['data'])) {
+    die("Invalid payment response.");
+}
+
+$decoded = base64_decode($_GET['data']);
+
+$response = json_decode($decoded, true);
+
+if (!$response) {
+    die("Unable to decode payment response.");
+}
+
+/*
+|--------------------------------------------------------------------------
+| Get Payment Details
+|--------------------------------------------------------------------------
+*/
+
+$status = $response['status'] ?? '';
+$transaction_code = $response['transaction_code'] ?? '';
+$total_amount = $response['total_amount'] ?? 0;
+$transaction_uuid = $response['transaction_uuid'] ?? '';
+
+/*
+|--------------------------------------------------------------------------
+| transaction_uuid = booking id
+|--------------------------------------------------------------------------
+*/
+
+$booking_id = (int) $transaction_uuid;
+
+/*
+|--------------------------------------------------------------------------
+| Check Payment Success
+|--------------------------------------------------------------------------
+*/
+
+$success = ($status === 'COMPLETE');
+
+/*
+|--------------------------------------------------------------------------
+| Update Database (only if Pending — prevents replay attacks)
+|--------------------------------------------------------------------------
+*/
+
+if ($success) {
+
+    $stmt = $conn->prepare("
+        UPDATE bookings
+        SET 
+            payment_status = 'Completed',
+            status = 'completed'
+        WHERE id = ? AND user_id = ?
+    ");
+
+    $stmt->bind_param("ii", $booking_id, $user_id);
+
+    $stmt->execute();
+
+    $stmt->close();
+}
+
+/*
+|--------------------------------------------------------------------------
+| Fetch Booking Details
+|--------------------------------------------------------------------------
+*/
+
+$stmt = $conn->prepare("
+    SELECT 
+        b.*,
+        v.name AS vehicle_name,
+        u.name AS user_name,
+        u.email AS user_email,
+        u.phone_number
+    FROM bookings b
+    JOIN vehicles v ON b.vehicle_id = v.id
+    JOIN users u ON b.user_id = u.id
+    WHERE b.id = ? AND b.user_id = ?
+");
+
+$stmt->bind_param("ii", $booking_id, $user_id);
+$stmt->execute();
+
+$booking = $stmt->get_result()->fetch_assoc();
+
+$stmt->close();
+
+if (!$booking) {
+    die("Booking not found.");
+}
+
+$accent = $success ? '#16a34a' : '#dc2626';
+$icon = $success ? '✔' : '✖';
+$label = $success ? 'Payment Successful' : 'Payment Failed';
+
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= $label ?></title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f1f5f9;
+            padding: 40px 20px;
+            color: #0f172a;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .card-header {
+            background:
+                <?= $accent ?>
+            ;
+            color: white;
+            padding: 35px;
+            text-align: center;
+        }
+
+        .icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: auto;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .row:last-child {
+            border: none;
+        }
+
+        .label {
+            color: #64748b;
+        }
+
+        .value {
+            font-weight: 700;
+        }
+
+        .btns {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .primary {
+            background:
+                <?= $accent ?>
+            ;
+            color: white;
+        }
+
+        .secondary {
+            border: 2px solid #cbd5e1;
+            color: #0f172a;
+            background: white;
+        }
+
+        .invoice {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .invoice-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 35px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 25px;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 800;
+            color: #16a34a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+
+        th {
+            background: #f8fafc;
+            text-align: left;
+            padding: 14px;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .total {
+            text-align: right;
+            margin-top: 25px;
+            font-size: 20px;
+            font-weight: 800;
+            color: #16a34a;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <div class="icon"><?= $icon ?></div>
+
+                <h1><?= $label ?></h1>
+
+                <p style="margin-top:10px;">
+                    <?= $success
+                        ? 'Your payment has been completed successfully.'
+                        : 'Payment verification failed.'
+                        ?>
+                </p>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+                    <div class="label">Booking ID</div>
+                    <div class="value">#<?= $booking_id ?></div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Transaction Code</div>
+                    <div class="value"><?= htmlspecialchars($transaction_code) ?></div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Payment Method</div>
+                    <div class="value">eSewa</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Amount Paid</div>
+                    <div class="value">NPR <?= number_format($booking['total_price'], 2) ?></div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Status</div>
+                    <div class="value" style="color:<?= $accent ?>">
+                        <?= $success ? 'Completed ✔' : 'Failed ✖' ?>
+                    </div>
+                </div>
+
+                <div class="btns">
+
+                    <?php if ($success): ?>
+                        <a href="#" onclick="window.print()" class="btn primary">
+                            🖨 Print Invoice
+                        </a>
+                    <?php endif; ?>
+
+                    <a href="../my-bookings.php" class="btn secondary">
+                        ← My Bookings
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
