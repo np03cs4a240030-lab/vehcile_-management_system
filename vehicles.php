@@ -117,11 +117,11 @@ $locations_result = $conn->query("SELECT DISTINCT location FROM vehicles ORDER B
             </a>
         </div>
         <ul class="nav-links">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="vehicles.php" style="color: var(--brand-orange);">Vehicles</a></li>
-            <li><a href="index.php#pricing">Pricing</a></li>
-            <li><a href="index.php#contact">Contact</a></li>
-        </ul>
+                <li><a href="./index.php#home">Home</a></li>
+                <li><a href="./vehicles.php">List of Vehicles</a></li>
+                <li><a href="./index.php#process">How it Works</a></li>
+                <li><a href="./index.php#contact">Contact</a></li>
+            </ul>
         <div class="nav-buttons">
             <?php if (isLoggedIn()): ?>
                 <span style="color: #cbd5e1;">Welcome, <?php echo htmlspecialchars($_SESSION['name']); ?></span>
