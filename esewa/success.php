@@ -65,7 +65,7 @@ if ($success) {
         UPDATE bookings
         SET 
             payment_status = 'Completed',
-            status = 'completed'
+            status = 'approved'
         WHERE id = ? AND user_id = ?
     ");
 
