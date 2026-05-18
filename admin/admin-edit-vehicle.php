@@ -121,26 +121,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <body style="background: var(--brand-light-gray);">
     <div class="dashboard-layout">
-        <aside class="sidebar" style="background: var(--brand-dark-blue); width: 260px; min-height: 100vh;">
-            <div class="sidebar-header" style="padding: 2rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <img src="../assets/images/logo.png" alt="Logo" style="height: 3rem;">
-                <h3 style="color: white; margin-top: 1rem;">Admin Panel</h3>
+        <!-- font awesome icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+        <!-- left sidebar -->
+        <aside class="sidebar">
+
+            <!-- logo and panel title -->
+            <div class="sidebar-logo">
+                <img src="../assets/images/logo.png" alt="Logo">
+                <span>Admin Panel</span>
             </div>
-            <nav class="sidebar-nav">
-                <a href="admin-dashboard.php" class="nav-item" style="color: white; text-decoration: none;">📊
-                    Dashboard</a>
-                <a href="admin-vehicles.php" class="nav-item active"
-                    style="color: white; background: var(--brand-orange); text-decoration: none;">🚗 Vehicles</a>
-                <a href="admin-bookings.php" class="nav-item" style="color: white; text-decoration: none;">📅
-                    Bookings</a>
-                <a href="admin-users.php" class="nav-item" style="color: white; text-decoration: none;">👥 Users</a>
-                <a href="admin-change-password.php" class="nav-item" style="color: white; text-decoration: none;">🔑 Change Password</a>
-                <a href="../logout.php" class="nav-item"
-                    style="margin-top: auto; color: #fca5a5; text-decoration: none;">🚪 Logout</a>
+
+            <!-- navigation links -->
+            <nav class="sidebar-menu">
+
+                <a href="admin-dashboard.php">
+                    <i class="fas fa-gauge-high"></i>
+                    Dashboard
+                </a>
+
+                <!-- vehicles is the active section -->
+                <a href="admin-vehicles.php" class="active">
+                    <i class="fas fa-car"></i>
+                    Vehicles
+                </a>
+
+                <a href="admin-bookings.php">
+                    <i class="fas fa-calendar-days"></i>
+                    Bookings
+                </a>
+
+                <a href="admin-users.php">
+                    <i class="fas fa-users"></i>
+                    Users
+                </a>
+
+                <a href="admin-change-password.php">
+                    <i class="fas fa-key"></i>
+                    Change Password
+                </a>
+
+                <!-- logout pinned to the bottom of the sidebar -->
+                <div class="logout-link">
+                    <a href="../logout.php">
+                        <i class="fas fa-right-from-bracket"></i>
+                        Logout
+                    </a>
+                </div>
+
             </nav>
+
         </aside>
 
-        <main class="main-content" style="padding: 2rem; flex: 1;">
+        <main class="main-content" style="padding: 2rem; flex: 1; margin-left: 240px;">
             <div class="content-header"
                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <div>
@@ -262,21 +296,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </main>
     </div>
     <style>
-        .sidebar-nav {
-            padding: 1rem;
+        /* sidebar: fixed to the left, full height, dark navy */
+        .sidebar {
+            width: 240px;
+            background: #1e293b;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        /* logo row at the top of the sidebar */
+        .sidebar-logo {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-logo img {
+            height: 36px;
+        }
+
+        .sidebar-logo span {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        /* nav area fills the remaining sidebar height */
+        .sidebar-menu {
+            padding: 16px 12px;
+            flex: 1;
             display: flex;
             flex-direction: column;
         }
 
-        .nav-item {
-            padding: 1rem 1.5rem;
-            margin-bottom: 0.5rem;
-            border-radius: 0.5rem;
-            transition: 0.3s;
+        /* individual nav link */
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            transition: all 0.2s;
         }
 
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.1);
+        /* icon fixed width so labels stay aligned */
+        .sidebar-menu a i {
+            width: 18px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        /* hover state */
+        .sidebar-menu a:hover {
+            background: rgba(255,255,255,0.07);
+            color: white;
+        }
+
+        /* orange highlight on the current page link */
+        .sidebar-menu a.active {
+            background: #f97316;
+            color: white;
+        }
+
+        /* logout wrapper pushes itself to the bottom */
+        .sidebar-menu .logout-link {
+            margin-top: auto;
+        }
+
+        /* logout link in soft red */
+        .sidebar-menu .logout-link a {
+            color: #fca5a5;
+        }
+
+        .sidebar-menu .logout-link a:hover {
+            background: rgba(239,68,68,0.15);
+            color: #fca5a5;
         }
 
         .form-label {
