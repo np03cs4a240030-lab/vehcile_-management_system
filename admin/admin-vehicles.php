@@ -1,321 +1,298 @@
 <?php
-session_start();
-require_once '../includes/connection.php';
+require_once '../config.php';
 
-// only admin can access this page
-if (!isLoggedIn() || !hasRole('admin')) {
+// Check if user is logged in and is admin
+if (!isLoggedIn() || !isAdmin()) {
     redirect('admin-login.php');
 }
 
-// check if form was submitted
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action'])) {
-        switch ($_POST['action']) {
+$success = '';
+$error = '';
+$vehicle_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
-            // flip availability between 0 and 1
-            case 'toggle_availability':
-                $vehicle_id = (int)$_POST['vehicle_id'];
-                $new_status = $_POST['current_status'] === '1' ? 0 : 1;
-                $sql = "UPDATE vehicles SET availability = ? WHERE id = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ii", $new_status, $vehicle_id);
-                $stmt->execute();
-                break;
+// 1. FETCH EXISTING VEHICLE DATA
+if ($vehicle_id > 0) {
+    $stmt = $conn->prepare("SELECT * FROM vehicles WHERE id = ?");
+    $stmt->bind_param("i", $vehicle_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $vehicle = $result->fetch_assoc();
 
-            // remove the vehicle from db
-            case 'delete':
-                $vehicle_id = (int)$_POST['vehicle_id'];
-                $sql = "DELETE FROM vehicles WHERE id = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("i", $vehicle_id);
-                $stmt->execute();
-                break;
-        }
-
-        // show success message and reload the page
-        $_SESSION['success'] = 'Action completed successfully!';
+    if (!$vehicle) {
+        $_SESSION['error'] = "Vehicle not found!";
         redirect('admin-vehicles.php');
+        exit();
+    }
+} else {
+    redirect('admin-vehicles.php');
+    exit();
+}
+
+// 2. HANDLE FORM SUBMISSION
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = sanitize($_POST['name']);
+    $type = $_POST['type'];
+    $location = sanitize($_POST['location']);
+    $price_per_day = (float) $_POST['price_per_day'];
+    $fuel_type = sanitize($_POST['fuel_type']);
+    $transmission = sanitize($_POST['transmission']);
+    $seats = (int) $_POST['seats'];
+    $features = sanitize($_POST['features']);
+    $description = sanitize($_POST['description']);
+    $availability = isset($_POST['availability']) ? 1 : 0;
+
+    $file_path = $vehicle['image']; // Default to old image
+    $db_path = $vehicle['image'];
+
+    // IMAGE UPLOAD LOGIC (Only if a new file is selected)
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+        $upload_dir = '../uploads/vehicles/';
+        $db_dir = 'uploads/vehicles/';
+        $file_tmp = $_FILES['image']['tmp_name'];
+        $original_name = $_FILES['image']['name'];
+        $file_ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+
+        if (!in_array($file_ext, $allowed)) {
+            $error = 'Only JPG, JPEG, PNG, WEBP files are allowed';
+        } else {
+            $file_name = uniqid('vehicle_', true) . '.' . $file_ext;
+            $new_file_path = $upload_dir . $file_name;
+
+            if (move_uploaded_file($file_tmp, $new_file_path)) {
+                // Delete old image if it exists
+                if (file_exists($vehicle['image'])) {
+                    unlink($vehicle['image']);
+                }
+                $file_path = $new_file_path;
+                $db_path = $db_dir . $file_name;
+            } else {
+                $error = 'Failed to upload new image';
+            }
+        }
+    }
+
+    if (empty($name) || empty($location) || empty($price_per_day)) {
+        $error = 'Please fill all required fields';
+    }
+
+    if (empty($error)) {
+        $stmt = $conn->prepare("UPDATE vehicles SET 
+            name=?, type=?, location=?, price_per_day=?, fuel_type=?, 
+            transmission=?, seats=?, features=?, description=?, image=?, availability=? 
+            WHERE id=?");
+
+        $stmt->bind_param(
+            "sssdssisssii",
+            $name,
+            $type,
+            $location,
+            $price_per_day,
+            $fuel_type,
+            $transmission,
+            $seats,
+            $features,
+            $description,
+            $db_path,
+            $availability,
+            $vehicle_id
+        );
+
+        if ($stmt->execute()) {
+            $_SESSION['success'] = "Vehicle updated successfully!";
+            redirect('admin-vehicles.php');
+            exit();
+        } else {
+            $error = "Database error: " . $conn->error;
+        }
     }
 }
-
-// grab search and filter values from url
-$search = isset($_GET['search']) ? sanitize($_GET['search']) : '';
-$type_filter = isset($_GET['type']) ? $_GET['type'] : 'all';
-
-// build query based on filters
-$sql = "SELECT * FROM vehicles WHERE 1=1";
-if ($search) {
-    // filter by name if search is given
-    $sql .= " AND name LIKE '%$search%'";
-}
-if ($type_filter && $type_filter != 'all') {
-    // filter by vehicle type
-    $sql .= " AND type = '$type_filter'";
-}
-// newest first
-$sql .= " ORDER BY created_at DESC";
-
-$vehicles = $conn->query($sql);
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehicle Management - Admin</title>
-    <!-- main styles -->
+    <title>Edit Vehicle - Admin</title>
     <link rel="stylesheet" href="../assets/css/main.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
+
 <body style="background: var(--brand-light-gray);">
     <div class="dashboard-layout">
+        <aside class="sidebar" style="background: var(--brand-dark-blue); width: 260px; min-height: 100vh;">
+            <div class="sidebar-header" style="padding: 2rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <img src="../assets/images/logo.png" alt="Logo" style="height: 3rem;">
+                <h3 style="color: white; margin-top: 1rem;">Admin Panel</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="admin-dashboard.php" class="nav-item" style="color: white; text-decoration: none;">📊
+                    Dashboard</a>
+                <a href="admin-vehicles.php" class="nav-item active"
+                    style="color: white; background: var(--brand-orange); text-decoration: none;">🚗 Vehicles</a>
+                <a href="admin-bookings.php" class="nav-item" style="color: white; text-decoration: none;">📅
+                    Bookings</a>
+                <a href="admin-users.php" class="nav-item" style="color: white; text-decoration: none;">👥 Users</a>
+                <a href="admin-change-password.php" class="nav-item" style="color: white; text-decoration: none;">🔑 Change Password</a>
+                <a href="../logout.php" class="nav-item"
+                    style="margin-top: auto; color: #fca5a5; text-decoration: none;">🚪 Logout</a>
+            </nav>
+        </aside>
 
-        <!-- icons library -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-<!-- left sidebar -->
-<aside class="sidebar">
-
-    <div class="sidebar-logo">
-        <img src="../assets/images/logo.png" alt="Logo">
-        <span>Admin Panel</span>
-    </div>
-
-    <!-- nav links -->
-    <nav class="sidebar-menu">
-
-        <a href="admin-dashboard.php">
-            <i class="fas fa-gauge-high"></i>
-            Dashboard
-        </a>
-
-        <!-- active page -->
-        <a href="admin-vehicles.php" class="active">
-            <i class="fas fa-car"></i>
-            Vehicles
-        </a>
-
-        <a href="admin-bookings.php">
-            <i class="fas fa-calendar-days"></i>
-            Bookings
-        </a>
-
-        <a href="admin-users.php">
-            <i class="fas fa-users"></i>
-            Users
-        </a>
-
-        <!-- sits at the bottom of sidebar -->
-        <div class="logout-link">
-            <a href="../logout.php">
-                <i class="fas fa-right-from-bracket"></i>
-                Logout
-            </a>
-        </div>
-
-    </nav>
-
-</aside>
-        
-
-        <!-- main content area -->
-        <main class="main-content">
-            <div class="content-header">
+        <main class="main-content" style="padding: 2rem; flex: 1;">
+            <div class="content-header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <div>
-                    <h1>Vehicle Management</h1>
-                    <p style="color: var(--text-secondary);">Manage all vehicles in the system</p>
+                    <h1>Edit Vehicle</h1>
+                    <p style="color: var(--text-secondary);">Updating: <?php echo htmlspecialchars($vehicle['name']); ?>
+                    </p>
                 </div>
-                <a href="admin-add-vehicle.php" class="btn btn-primary">+ Add Vehicle</a>
+                <a href="admin-vehicles.php" class="btn btn-secondary">← Back</a>
             </div>
 
-            <!-- search bar and type filter -->
-            <div class="filters">
-                <form method="GET" style="display: flex; gap: 1rem; flex: 1;">
-                    <input type="text" name="search" placeholder="🔍 Search vehicles..." 
-                           value="<?php echo htmlspecialchars($search); ?>"
-                           class="form-input" style="flex: 1;">
-                    <select name="type" class="form-input">
-                        <option value="all">All Types</option>
-                        <option value="Car" <?php echo $type_filter === 'Car' ? 'selected' : ''; ?>> Cars</option>
-                        <option value="Bike" <?php echo $type_filter === 'Bike' ? 'selected' : ''; ?>Bikes</option>
-                        <option value="Scooter" <?php echo $type_filter === 'Scooter' ? 'selected' : ''; ?>>Scooters</option>
-                    </select>
-                    <button type="submit" class="btn btn-primary">Search</button>
-                </form>
-            </div>
+            <?php if ($error): ?>
+                <div class="alert alert-error"
+                    style="background: #fee2e2; color: #b91c1c; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                    <?php echo $error; ?>
+                </div>
+            <?php endif; ?>
 
-            <!-- vehicle cards -->
-            <div class="grid grid-cols-3">
-                <?php if ($vehicles->num_rows > 0): ?>
-                    <?php while($vehicle = $vehicles->fetch_assoc()): ?>
-                    <div class="card vehicle-card hover-lift">
+            <form method="POST" enctype="multipart/form-data">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                    <div class="card"
+                        style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
 
-                        <!-- vehicle image with type badge -->
-                        <div style="position: relative; overflow: hidden; height: 12rem;">
-                            <img src="../<?php echo htmlspecialchars($vehicle['image']); ?>" 
-                                 alt="<?php echo htmlspecialchars($vehicle['name']); ?>"
-                                 style="width: 100%; height: 100%; object-fit: cover;">
-                                 <div class="badge-overlay">
-    <?php echo htmlspecialchars($vehicle['type']); ?>
-</div>
-                            
-                            <?php if (!$vehicle['availability']): ?>
-                                <!-- dark overlay if vehicle is not available -->
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;">
-                                    <span class="badge badge-danger" style="font-size: 1rem; padding: 0.75rem 1.5rem;">
-                                        ✕ Unavailable
-                                    </span>
-                                </div>
-                            <?php endif; ?>
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-label">Vehicle Name *</label>
+                            <input type="text" name="name" class="form-input" required
+                                value="<?php echo htmlspecialchars($vehicle['name']); ?>">
                         </div>
 
-                        <div class="card-body">
-                            <h3 style="font-size: 1.25rem; margin-bottom: 0.75rem;">
-                                <?php echo htmlspecialchars($vehicle['name']); ?>
-                            </h3>
-                            
-                            <!-- vehicle details grid -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
-                                <div> <?php echo htmlspecialchars($vehicle['location']); ?></div>
-                                <div> <?php echo htmlspecialchars($vehicle['fuel_type'] ?? 'N/A'); ?></div>
-                                <div> <?php echo htmlspecialchars($vehicle['transmission'] ?? 'N/A'); ?></div>
-                                <?php if ($vehicle['seats']): ?>
-                                <div>👥 <?php echo $vehicle['seats']; ?> Seats</div>
-                                <?php endif; ?>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="form-group">
+                                <label class="form-label">Vehicle Type *</label>
+                                <select name="type" class="form-input" required>
+                                    <option value="Car" <?php echo $vehicle['type'] == 'Car' ? 'selected' : ''; ?>>Car
+                                    </option>
+                                    <option value="Bike" <?php echo $vehicle['type'] == 'Bike' ? 'selected' : ''; ?>>Bike
+                                    </option>
+                                    <option value="Scooter" <?php echo $vehicle['type'] == 'Scooter' ? 'selected' : ''; ?>>Scooter</option>
+                                </select>
                             </div>
-
-                            <!-- price and action buttons -->
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #f1f5f9;">
-                                <div>
-                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Price/Day</div>
-                                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--brand-orange);">
-                                        NPR <?php echo number_format($vehicle['price_per_day'], 0); ?>
-                                    </div>
-                                </div>
-                                <div style="display: flex; gap: 0.5rem;">
-
-                                    <!-- toggle available / unavailable -->
-                                    <form method="POST" style="display: inline;">
-                                        <input type="hidden" name="action" value="toggle_availability">
-                                        <input type="hidden" name="vehicle_id" value="<?php echo $vehicle['id']; ?>">
-                                        <input type="hidden" name="current_status" value="<?php echo $vehicle['availability']; ?>">
-                                        <button type="submit" class="btn-icon" style="padding: 0.5rem;" title="Toggle Availability">
-                                            <?php echo $vehicle['availability'] ? '✓' : '✕'; ?>
-                                        </button>
-                                    </form>
-
-                                    <!-- edit button -->
-                                    <a href="admin-edit-vehicle.php?id=<?php echo $vehicle['id']; ?>" class="btn-icon" style="padding: 0.5rem;" title="Edit">✏️</a>
-
-                                    <!-- delete with confirmation -->
-                                    <form method="POST" style="display: inline;" onsubmit="return confirm('Delete this vehicle?');">
-                                        <input type="hidden" name="action" value="delete">
-                                        <input type="hidden" name="vehicle_id" value="<?php echo $vehicle['id']; ?>">
-                                        <button type="submit" class="btn-icon" style="padding: 0.5rem; color: #ef4444;" title="Delete">🗑️</button>
-                                    </form>
-                                </div>
+                            <div class="form-group">
+                                <label class="form-label">Location *</label>
+                                <input type="text" name="location" class="form-input" required
+                                    value="<?php echo htmlspecialchars($vehicle['location']); ?>">
                             </div>
                         </div>
+
+                        <div
+                            style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="form-group">
+                                <label class="form-label">Price/Day (NPR) *</label>
+                                <input type="number" name="price_per_day" class="form-input" required step="0.01"
+                                    value="<?php echo htmlspecialchars($vehicle['price_per_day']); ?>">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Fuel</label>
+                                <select name="fuel_type" class="form-input">
+                                    <option value="Petrol" <?php echo $vehicle['fuel_type'] == 'Petrol' ? 'selected' : ''; ?>>Petrol</option>
+                                    <option value="Diesel" <?php echo $vehicle['fuel_type'] == 'Diesel' ? 'selected' : ''; ?>>Diesel</option>
+                                    <option value="Electric" <?php echo $vehicle['fuel_type'] == 'Electric' ? 'selected' : ''; ?>>Electric</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Transmission</label>
+                                <select name="transmission" class="form-input">
+                                    <option value="Manual" <?php echo $vehicle['transmission'] == 'Manual' ? 'selected' : ''; ?>>Manual</option>
+                                    <option value="Automatic" <?php echo $vehicle['transmission'] == 'Automatic' ? 'selected' : ''; ?>>Automatic</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-label">Seats</label>
+                            <input type="number" name="seats" class="form-input" min="1"
+                                value="<?php echo htmlspecialchars($vehicle['seats']); ?>">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-label">Features</label>
+                            <input type="text" name="features" class="form-input"
+                                value="<?php echo htmlspecialchars($vehicle['features']); ?>">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-input"
+                                rows="4"><?php echo htmlspecialchars($vehicle['description']); ?></textarea>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-label">Update Image (Leave blank to keep current)</label>
+                            <input type="file" name="image" class="form-input" accept="image/*">
+                        </div>
+
+                        <div
+                            style="background: #fff7ed; padding: 1rem; border-radius: 0.5rem; border: 1px solid #fed7aa; margin-bottom: 2rem;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" name="availability" value="1" <?php echo $vehicle['availability'] ? 'checked' : ''; ?>>
+                                <span><strong>Active Listing</strong><br><small>Is this vehicle currently available for
+                                        rent?</small></span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary"
+                            style="width: 100%; padding: 1rem; background: var(--brand-orange); color: white; border: none; border-radius: 0.5rem; font-weight: bold; cursor: pointer;">
+                            💾 Save Changes
+                        </button>
                     </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <!-- no vehicles found -->
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem;">
-                        <div style="font-size: 4rem; margin-bottom: 1rem;">🚗</div>
-                        <h3>No Vehicles Found</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Start by adding your first vehicle</p>
-                        <a href="admin-add-vehicle.php" class="btn btn-primary">+ Add Vehicle</a>
+
+                    <div>
+                        <div class="card"
+                            style="background: white; padding: 1.5rem; border-radius: 1rem; text-align: center;">
+                            <h4 style="margin-bottom: 1rem;">Current Image</h4>
+                            <img src="../<?php echo htmlspecialchars($vehicle['image']); ?>"
+                                style="width: 100%; border-radius: 0.5rem; object-fit: cover;">
+                        </div>
                     </div>
-                <?php endif; ?>
-            </div>
+                </div>
+            </form>
         </main>
     </div>
+    <style>
+        .sidebar-nav {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
 
-<style>
-        /* sidebar styles */
-.sidebar{
-    width:240px;
-    background:#1e293b;
-    color:white;
-    display:flex;
-    flex-direction:column;
-    min-height:100vh;
-    position:fixed;
-    top:0;
-    left:0;
-}
+        .nav-item {
+            padding: 1rem 1.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            transition: 0.3s;
+        }
 
-/* logo area at top */
-.sidebar-logo{
-    padding:20px 24px;
-    border-bottom:1px solid rgba(255,255,255,0.08);
-    display:flex;
-    align-items:center;
-    gap:12px;
-}
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
 
-.sidebar-logo img{
-    height:36px;
-}
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--brand-dark-blue);
+        }
 
-.sidebar-logo span{
-    font-size:13px;
-    color:#94a3b8;
-    font-weight:600;
-}
-
-/* nav takes remaining height */
-.sidebar-menu{
-    padding:16px 12px;
-    flex:1;
-    display:flex;
-    flex-direction:column;
-}
-
-.sidebar-menu a{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:11px 14px;
-    border-radius:8px;
-    color:#94a3b8;
-    text-decoration:none;
-    font-size:14px;
-    font-weight:500;
-    margin-bottom:4px;
-    transition:all 0.2s;
-}
-
-.sidebar-menu a i{
-    width:18px;
-    text-align:center;
-    font-size:15px;
-}
-
-.sidebar-menu a:hover{
-    background:rgba(255,255,255,0.07);
-    color:white;
-}
-
-/* orange highlight for current page */
-.sidebar-menu a.active{
-    background:#f97316;
-    color:white;
-}
-
-/* push logout to the bottom */
-.sidebar-menu .logout-link{
-    margin-top:auto;
-}
-
-.sidebar-menu .logout-link a{
-    color:#fca5a5;
-}
-
-.sidebar-menu .logout-link a:hover{
-    background:rgba(239,68,68,0.15);
-    color:#fca5a5;
-}
-    </style> 
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+        }
+    </style>
 </body>
+
 </html>
