@@ -218,6 +218,7 @@ while ($r = $vehicleRentalTrend->fetch_assoc()) {
         <a href="admin-vehicles.php"><i class="fas fa-car"></i> Vehicles</a>
         <a href="admin-bookings.php"><i class="fas fa-calendar-days"></i> Bookings</a>
         <a href="admin-users.php"><i class="fas fa-users"></i> Users</a>
+        <a href="admin-change-password.php"><i class="fas fa-key"></i> Change Password</a>
         <div class="logout-link">
             <a href="../logout.php"><i class="fas fa-right-from-bracket"></i> Logout</a>
         </div>

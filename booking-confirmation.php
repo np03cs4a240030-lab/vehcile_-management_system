@@ -240,11 +240,11 @@ if (isset($_GET['new']) && $_GET['new'] === '1' && empty($booking['popup_shown']
 <!-- ── SIDEBAR ── -->
 <div class="sidebar">
     <a href="index.php" class="sidebar-logo">
-        <img src="nobglogo.png" alt="Bhatbhatey"
+        <img src="assets/images/logo.png" alt="Bhatbhatey Rental"
              onerror="this.style.display='none'; document.querySelector('.logo-fallback').style.display='flex';">
         <div class="logo-fallback"><i class="fas fa-car"></i></div>
         <div class="sidebar-logo-text">
-            <span class="lt-name">Bhatbhatey</span>
+            <span class="lt-name" style="display:none">Bhatbhatey</span>
             <span class="lt-sub">Rental</span>
         </div>
     </a>
