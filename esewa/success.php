@@ -60,14 +60,16 @@ $success = ($status === 'COMPLETE');
 */
 
 if ($success) {
+    
+    // NEW — only update status
+$stmt = $conn->prepare("
+    UPDATE bookings
+    SET 
+        status = 'completed'
+    WHERE id = ? AND user_id = ?
+");
 
-    $stmt = $conn->prepare("
-        UPDATE bookings
-        SET 
-            payment_status = 'Completed',
-            status = 'completed'
-        WHERE id = ? AND user_id = ?
-    ");
+    
 
     $stmt->bind_param("ii", $booking_id, $user_id);
 
@@ -91,7 +93,8 @@ $stmt = $conn->prepare("
         u.email    AS user_email,
         u.phone_number
     FROM bookings b
-    JOIN vehicles v ON b.vehicle_id = v.id
+    LEFT JOIN vehicles v ON b.vehicle_id = v.id
+    
     JOIN users    u ON b.user_id    = u.id
     WHERE b.id = ? AND b.user_id = ?
 ");
