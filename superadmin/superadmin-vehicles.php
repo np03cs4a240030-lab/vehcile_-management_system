@@ -101,7 +101,7 @@ $vehicles = $conn->query($sql);
             display: flex;
         }
 
-        .dashboard-layout { display: flex; min-height: 100vh; }
+        .dashboard-layout { display: block; min-height: 100vh; }
 
         /* Sidebar Navigation Styling */
         .sidebar {
@@ -126,7 +126,7 @@ $vehicles = $conn->query($sql);
         .logout-link a:hover { background: rgba(239,68,68,0.1) !important; }
 
         /* Main Content Layout */
-        .main-content { margin-left: 240px; flex: 1; padding: 28px; }
+        .main-content { margin-left: 240px; padding: 28px; min-height: 100vh; width: calc(100% - 240px); box-sizing: border-box; }
 
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
         .page-header h1 { font-size: 22px; font-weight: 700; color: white; }
@@ -185,6 +185,7 @@ $vehicles = $conn->query($sql);
                 <a href="superadmin-admins.php"><i class="fas fa-user-shield"></i> Admins</a>
                 <a href="superadmin-vehicles.php" class="active"><i class="fas fa-car"></i> Vehicles</a>
                 <a href="superadmin-bookings.php"><i class="fas fa-calendar-days"></i> Bookings</a>
+                <a href="superadmin-settings.php"><i class="fas fa-gear"></i> Settings</a>
                 <div class="logout-link">
                     <a href="../logout.php"><i class="fas fa-right-from-bracket"></i> Logout</a>
                 </div>
@@ -235,7 +236,7 @@ $vehicles = $conn->query($sql);
                             <tr>
                                 <!-- Image Preview -->
                                 <td>
-                                    <img src="../admin/<?php echo htmlspecialchars($vehicle['image']); ?>" 
+                                    <img src="../<?php echo (strpos($vehicle['image'], 'uploads/') === 0) ? $vehicle['image'] : 'uploads/vehicles/' . $vehicle['image']; ?>"  
                                          style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
                                 </td>
                                 
