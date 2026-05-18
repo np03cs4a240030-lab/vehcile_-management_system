@@ -81,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Vehicle - Super Admin</title>
     <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         :root {
             --primary: #6366f1;
@@ -101,53 +102,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .dashboard-layout {
-            display: grid;
-            grid-template-columns: 260px 1fr;
+            display: flex;
             min-height: 100vh;
         }
 
-        /* Sidebar */
+        /* Sidebar — matches superadmin-vehicles.php */
         .sidebar {
-            background: #1e293b;
-            border-right: 1px solid var(--border);
+            width: 240px;
+            background: rgba(255,255,255,0.03);
+            border-right: 1px solid rgba(255,255,255,0.07);
             display: flex;
             flex-direction: column;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            flex-shrink: 0;
         }
+        .sidebar-logo {
+            padding: 22px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-logo img { height: 36px; }
+        .sidebar-logo-text .title { font-size: 14px; font-weight: 700; color: white; }
+        .sidebar-logo-text .sub { font-size: 11px; color: #a855f7; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); border-radius: 20px; padding: 1px 8px; display: inline-block; margin-top: 2px; }
 
-        .sidebar-header {
-            padding: 2rem;
-            text-align: center;
-            border-bottom: 1px solid var(--border);
-        }
+        .sidebar-menu { padding: 16px 12px; flex: 1; display: flex; flex-direction: column; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 4px; transition: all 0.2s; }
+        .sidebar-menu a i { width: 18px; text-align: center; }
+        .sidebar-menu a:hover { background: rgba(255,255,255,0.07); color: white; }
+        .sidebar-menu a.active { background: linear-gradient(135deg, #9333ea, #7c3aed); color: white; }
 
-        .sidebar-nav {
-            padding: 1rem;
-            flex: 1;
-        }
-
-        .nav-item {
-            display: block;
-            padding: 0.85rem 1.25rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            transition: all 0.2s ease;
-        }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-        }
-
-        .nav-item.active {
-            background: var(--primary);
-            color: white;
-        }
+        .logout-link { margin-top: auto; }
+        .logout-link a { color: #fca5a5 !important; }
+        .logout-link a:hover { background: rgba(239,68,68,0.1) !important; }
 
         /* Content */
         .main-content {
+            margin-left: 240px;
+            flex: 1;
             padding: 2.5rem;
+            box-sizing: border-box;
         }
 
         .content-header {
@@ -256,16 +254,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="dashboard-layout">
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <img src="../assets/images/logo.png" alt="Logo" style="height: 40px;">
-                <h3 style="font-size: 1rem; margin-top: 1rem;">Super Admin</h3>
+            <div class="sidebar-logo">
+                <img src="../assets/images/logo.png" alt="Logo">
+                <div class="sidebar-logo-text">
+                    <div class="title">Bhatbhatey</div>
+                    <div class="sub">Super Admin</div>
+                </div>
             </div>
-            <nav class="sidebar-nav">
-                <a href="superadmin-dashboard.php" class="nav-item">Dashboard</a>
-                <a href="superadmin-users.php" class="nav-item">User Management</a>
-                <a href="superadmin-vehicles.php" class="nav-item active">Vehicles</a>
-                <a href="superadmin-bookings.php" class="nav-item">Bookings</a>
-                <a href="../logout.php" class="nav-item" style="margin-top: auto; color: #fca5a5;">Logout</a>
+            <nav class="sidebar-menu">
+                <a href="superadmin-dashboard.php"><i class="fas fa-gauge-high"></i> Dashboard</a>
+                <a href="superadmin-users.php"><i class="fas fa-users"></i> Users</a>
+                <a href="superadmin-admins.php"><i class="fas fa-user-shield"></i> Admins</a>
+                <a href="superadmin-vehicles.php" class="active"><i class="fas fa-car"></i> Vehicles</a>
+                <a href="superadmin-bookings.php"><i class="fas fa-calendar-days"></i> Bookings</a>
+                <a href="superadmin-settings.php"><i class="fas fa-gear"></i> Settings</a>
+                <div class="logout-link">
+                    <a href="../logout.php"><i class="fas fa-right-from-bracket"></i> Logout</a>
+                </div>
             </nav>
         </aside>
 
