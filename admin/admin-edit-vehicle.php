@@ -133,6 +133,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     style="color: white; background: var(--brand-orange); text-decoration: none;">🚗 Vehicles</a>
                 <a href="admin-bookings.php" class="nav-item" style="color: white; text-decoration: none;">📅
                     Bookings</a>
+                <a href="admin-users.php" class="nav-item" style="color: white; text-decoration: none;">👥 Users</a>
+                <a href="admin-change-password.php" class="nav-item" style="color: white; text-decoration: none;">🔑 Change Password</a>
                 <a href="../logout.php" class="nav-item"
                     style="margin-top: auto; color: #fca5a5; text-decoration: none;">🚪 Logout</a>
             </nav>

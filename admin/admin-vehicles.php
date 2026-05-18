@@ -105,6 +105,11 @@ $vehicles = $conn->query($sql);
             Users
         </a>
 
+        <a href="admin-change-password.php">
+            <i class="fas fa-key"></i>
+            Change Password
+        </a>
+
         <!-- sits at the bottom of sidebar -->
         <div class="logout-link">
             <a href="../logout.php">

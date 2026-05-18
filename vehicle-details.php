@@ -153,7 +153,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     sendMail($userEmail, $emailSubject, $emailBody);
                      
 
-                    redirect('booking-confirmation.php?id=' . $bookingId . '&new=1');
+                    if ($paymentMethod === 'online') {
+                        redirect('my-bookings.php?msg=booking_pending');
+                    } else {
+                        redirect('booking-confirmation.php?id=' . $bookingId . '&new=1');
+                    }
                 } else {
                     $error = "Booking failed";
                 }
@@ -170,24 +174,230 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($vehicle['name']); ?> - Bhatbhatey Rental</title>
     <link rel="stylesheet" href="css/style.css">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #f97316;
+            --primary-light: #fff7ed;
+            --dark: #0f172a;
+            --dark-blue: #1e293b;
+            --slate: #64748b;
+            --border: #e2e8f0;
+            --bg: #f1f5f9;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 250px;
+            background: var(--dark-blue);
+            position: fixed;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 16px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .sidebar-logo img {
+            height: 38px;
+            width: auto;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+
+        .logo-fallback {
+            display: none;
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 9px;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .sidebar-logo-text .lt-name {
+            color: white;
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .sidebar-logo-text .lt-sub {
+            color: #64748b;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-nav {
+            padding: 16px 12px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-section-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #475569;
+            font-weight: 700;
+            padding: 0 8px;
+            margin: 16px 0 6px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 11px 12px;
+            border-radius: 10px;
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 3px;
+            text-decoration: none;
+        }
+
+        .sidebar-nav a i {
+            width: 18px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .sidebar-nav a:hover {
+            background: #334155;
+            color: white;
+        }
+
+        .sidebar-nav a.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+
+        .sidebar-nav a.danger:hover {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .sidebar-footer {
+            padding: 12px 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .user-initials {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 800;
+            flex-shrink: 0;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .user-info-inner {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .u-name {
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .u-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        .u-badge i {
+            font-size: 7px;
+            color: #22c55e;
+        }
+
+        .main-content {
+            margin-left: 250px;
+        }
+    </style>
 </head>
 
 <body>
     <div class="dashboard">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <img src="../src/imports/image-0.png" alt="Bhatbhatey Rental" onerror="this.style.display='none'">
+        <div class="sidebar">
+            <a href="index.php" class="sidebar-logo">
+                <img src="nobglogo.png" alt="Bhatbhatey"
+                    onerror="this.style.display='none'; document.querySelector('.logo-fallback').style.display='flex';">
+                <div class="logo-fallback"><i class="fas fa-car"></i></div>
+                <div class="sidebar-logo-text">
+                    <span class="lt-name">Bhatbhatey</span>
+                    <span class="lt-sub">Rental</span>
+                </div>
+            </a>
+
+            <div class="sidebar-nav">
+                <div class="nav-section-label">Main</div>
+                <a href="user/user-dashboard.php"><i class="fas fa-gauge-high"></i> Dashboard</a>
+                <a href="vehicles.php" class="active"><i class="fas fa-car"></i> Browse Vehicles</a>
+                <a href="my-bookings.php"><i class="fas fa-calendar-check"></i> My Bookings</a>
+                <div class="nav-section-label">Account</div>
+                <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
+                <a href="logout.php" class="danger"><i class="fas fa-right-from-bracket"></i> Logout</a>
             </div>
-            <div class="sidebar-menu">
-                <a href="user/user-dashboard.php"> Dashboard</a>
-                <a href="vehicles.php" class="active"> Available Vehicles</a>
-                <a href="my-bookings.php"> My Bookings</a>
-                <a href="profile.php">Profile</a>
-                <a href="logout.php">Logout</a>
+
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-initials">
+                        <?php echo strtoupper(substr($currentUser['name'] ?? 'U', 0, 2)); ?>
+                    </div>
+                    <div class="user-info-inner">
+                        <div class="u-name"><?php echo htmlspecialchars($currentUser['name'] ?? 'User'); ?></div>
+                        <div class="u-badge"><i class="fas fa-circle"></i> Active Member</div>
+                    </div>
+                </div>
             </div>
-        </aside>
+        </div>
 
         <!-- Main Content -->
         <main class="main-content">
