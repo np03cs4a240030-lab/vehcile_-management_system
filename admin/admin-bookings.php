@@ -51,7 +51,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
 
         } elseif (in_array($new_status, ['completed', 'cancelled'])) {
-            $conn->query("UPDATE vehicles SET availability = 1 WHERE id = $vid");
+            // Only restore availability if no OTHER active booking exists for this vehicle
+            $otherActive = $conn->query("
+                SELECT COUNT(*) AS c FROM bookings
+                WHERE vehicle_id = $vid
+                  AND id != $booking_id
+                  AND status IN ('pending', 'approved', 'ongoing')
+            ")->fetch_assoc()['c'];
+            if ($otherActive == 0) {
+                $conn->query("UPDATE vehicles SET availability = 1 WHERE id = $vid");
+            }
         }
     }
 

@@ -25,9 +25,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['review_submit'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'cancel_booking') {
         $bid = (int) $_POST['booking_id'];
-        $stmt = $conn->prepare("UPDATE bookings SET status='cancelled' WHERE id=? AND user_id=? AND status='pending'");
-        $stmt->bind_param("ii", $bid, $currentUser['id']);
-        $stmt->execute();
+
+        // Fetch the booking first so we can get the vehicle_id
+        $fetchStmt = $conn->prepare("SELECT vehicle_id FROM bookings WHERE id = ? AND user_id = ? AND status = 'pending'");
+        $fetchStmt->bind_param("ii", $bid, $currentUser['id']);
+        $fetchStmt->execute();
+        $fetchResult = $fetchStmt->get_result()->fetch_assoc();
+
+        if ($fetchResult) {
+            $vid = (int) $fetchResult['vehicle_id'];
+
+            // Cancel the booking
+            $stmt = $conn->prepare("UPDATE bookings SET status='cancelled' WHERE id=? AND user_id=? AND status='pending'");
+            $stmt->bind_param("ii", $bid, $currentUser['id']);
+            $stmt->execute();
+
+            // Restore vehicle availability ONLY if no other active booking exists for this vehicle
+            $otherActive = $conn->query("
+                SELECT COUNT(*) AS c FROM bookings
+                WHERE vehicle_id = $vid
+                  AND id != $bid
+                  AND status IN ('pending', 'approved', 'ongoing')
+            ")->fetch_assoc()['c'];
+
+            if ($otherActive == 0) {
+                $conn->query("UPDATE vehicles SET availability = 1 WHERE id = $vid");
+            }
+        }
+
         redirect('my-bookings.php?msg=cancelled');
     }
 }
