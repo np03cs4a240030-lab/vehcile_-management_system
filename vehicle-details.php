@@ -488,7 +488,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <?php endif; ?>
 
                                     <div class="form-group">
-                                        <label>📅 Start Date</label>
+                                        <label>Start Date</label>
                                         <input type="date" name="start_date" id="startDate" class="form-control"
                                             required min="<?php echo date('Y-m-d'); ?>">
                                     </div>
