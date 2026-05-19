@@ -361,7 +361,6 @@ $pendingCount = $bStatMap['pending'] ?? 0;
                 <?php endif; ?>
             </a>
             
-        <a href="admin-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
         <a href="admin-users.php" class="btn-action btn-secondary-action">
                 <i class="fas fa-users"></i> Users
             </a>
