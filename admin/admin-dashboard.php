@@ -332,6 +332,8 @@ $pendingCount = $bStatMap['pending'] ?? 0;
                 <span class="nav-badge"><?php echo $pendingCount; ?></span>
             <?php endif; ?>
         </a>
+        
+        <a href="admin-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
         <a href="admin-users.php"><i class="fas fa-users"></i> Users</a>
         <a href="admin-change-password.php"><i class="fas fa-key"></i> Change Password</a>
         <div class="logout-link">
@@ -358,7 +360,9 @@ $pendingCount = $bStatMap['pending'] ?? 0;
                     <span style="background:#ef4444;color:white;font-size:11px;font-weight:700;padding:1px 6px;border-radius:10px;"><?php echo $pendingCount; ?></span>
                 <?php endif; ?>
             </a>
-            <a href="admin-users.php" class="btn-action btn-secondary-action">
+            
+        <a href="admin-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
+        <a href="admin-users.php" class="btn-action btn-secondary-action">
                 <i class="fas fa-users"></i> Users
             </a>
         </div>

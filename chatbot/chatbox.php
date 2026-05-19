@@ -239,12 +239,12 @@
 
 @media (max-width: 480px) {
     #vms-chat-window { width: calc(100vw - 20px) !important; right: 10px !important; height: 72vh !important; }
-    #vms-chat-btn { bottom: 18px !important; right: 16px !important; }
+    #vms-chat-btn { bottom: 144px !important; right: 16px !important; }
 }
 
 #vms-chat-btn {
     position: fixed !important;
-    bottom: 100px !important;
+    bottom: 144px !important;
     right: 25px !important;
     z-index: 999999 !important;
     width: 62px !important;

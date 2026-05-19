@@ -102,7 +102,8 @@ $admins = $conn->query("SELECT * FROM users WHERE role = 'admin' ORDER BY create
         <a href="superadmin-admins.php" class="active"><i class="fas fa-user-shield"></i> Admins</a>
         <a href="superadmin-vehicles.php"><i class="fas fa-car"></i> Vehicles</a>
         <a href="superadmin-bookings.php"><i class="fas fa-calendar-days"></i> Bookings</a>
-        <a href="superadmin-settings.php"><i class="fas fa-gear"></i> Settings</a>
+        <a href="superadmin-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
+                <a href="superadmin-settings.php"><i class="fas fa-gear"></i> Settings</a>
         <div class="logout-link">
             <a href="../logout.php"><i class="fas fa-right-from-bracket"></i> Logout</a>
         </div>

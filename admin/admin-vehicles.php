@@ -100,6 +100,8 @@ $vehicles = $conn->query($sql);
             Bookings
         </a>
 
+        
+        <a href="admin-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
         <a href="admin-users.php">
             <i class="fas fa-users"></i>
             Users

@@ -120,6 +120,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="admin-dashboard.php"><i class="fas fa-gauge-high"></i> Dashboard</a>
         <a href="admin-vehicles.php"><i class="fas fa-car"></i> Vehicles</a>
         <a href="admin-bookings.php"><i class="fas fa-calendar-days"></i> Bookings</a>
+        
+        <a href="admin-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
         <a href="admin-users.php"><i class="fas fa-users"></i> Users</a>
         <a href="admin-change-password.php" class="active"><i class="fas fa-key"></i> Change Password</a>
         <div class="logout-link">

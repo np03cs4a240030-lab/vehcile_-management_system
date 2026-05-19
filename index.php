@@ -1075,10 +1075,36 @@ if ($result && $result->num_rows > 0) {
             transform: translateY(-1px);
         }
 
+        /* ─── SUPPORT TICKET ─── */
+        .ticket-float {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--orange);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4);
+            text-decoration: none;
+            z-index: 90;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .ticket-float:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 32px rgba(249, 115, 22, 0.5);
+            color: white;
+        }
+
         /* ─── WHATSAPP ─── */
         .whatsapp-float {
             position: fixed;
-            bottom: 24px;
+            bottom: 84px;
             right: 24px;
             background: #25D366;
             color: white;
@@ -1580,9 +1606,19 @@ if ($result && $result->num_rows > 0) {
         </div>
     </section>
 
+   
+
     <!-- WhatsApp -->
     <a href="https://wa.me/9779744368091?text=Hi%20I%20need%20help" class="whatsapp-float" target="_blank">
         <span>💬</span>
+    </a>
+    <br>
+     <!-- Support Ticket -->
+    <a href="support-tickets.php" class="ticket-float">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+        </svg>
+        <span>Support Ticket</span>
     </a>
 
     <!-- ─── FOOTER ─── -->

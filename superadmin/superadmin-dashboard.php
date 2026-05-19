@@ -313,7 +313,8 @@ $pendingCount = $bMap['pending'] ?? 0;
                 <span class="nav-badge"><?php echo $pendingCount; ?></span>
             <?php endif; ?>
         </a>
-        <a href="superadmin-settings.php"><i class="fas fa-gear"></i> Settings</a>
+        <a href="superadmin-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
+                <a href="superadmin-settings.php"><i class="fas fa-gear"></i> Settings</a>
         <div class="logout-link">
             <a href="../logout.php"><i class="fas fa-right-from-bracket"></i> Logout</a>
         </div>

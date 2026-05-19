@@ -381,6 +381,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="user/user-dashboard.php"><i class="fas fa-gauge-high"></i> Dashboard</a>
                 <a href="vehicles.php" class="active"><i class="fas fa-car"></i> Browse Vehicles</a>
                 <a href="my-bookings.php"><i class="fas fa-calendar-check"></i> My Bookings</a>
+            <a href="support-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
                 <div class="nav-section-label">Account</div>
                 <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
                 <a href="logout.php" class="danger"><i class="fas fa-right-from-bracket"></i> Logout</a>

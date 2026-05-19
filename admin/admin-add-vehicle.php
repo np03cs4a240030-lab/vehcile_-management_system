@@ -150,7 +150,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Bookings
             </a>
 
-            <a href="admin-users.php">
+            
+        <a href="admin-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
+        <a href="admin-users.php">
                 <i class="fas fa-users"></i>
                 Users
             </a>
