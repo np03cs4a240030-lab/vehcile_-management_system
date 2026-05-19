@@ -22,9 +22,9 @@ $status           = $_GET['status']           ?? 'FAILED';   // FAILED | CANCELE
 //     Format we set:  {booking_id}_{timestamp}
 // ─────────────────────────────────────────────
 
-$booking_id = 0;
+$booking_id = (int)($_GET['booking_id'] ?? 0);
 
-if ($transaction_uuid) {
+if ($transaction_uuid && !$booking_id) {
     $parts      = explode('_', $transaction_uuid);
     $booking_id = (int)($parts[0] ?? 0);
 }
@@ -450,7 +450,7 @@ $reason = $reason_map[$status_upper] ?? $reason_map['FAILED'];
         <!-- ══  Buttons  ══ -->
         <div class="actions">
             <?php if ($booking): ?>
-            <a href="../payment/initiate.php?booking_id=<?php echo $booking_id; ?>&amount=<?php echo $booking['total_price']; ?>" class="btn btn-orange">
+            <a href="initiate.php?booking_id=<?php echo $booking_id; ?>&amount=<?php echo $booking['total_price']; ?>" class="btn btn-orange">
                 🔄 Retry Payment
             </a>
             <?php endif; ?>

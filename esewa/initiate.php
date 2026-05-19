@@ -31,9 +31,7 @@ $transaction_uuid = $booking_id . '_' . time();
 | Amount Details
 |--------------------------------------------------------------------------
 */
-
-$total_amount = number_format($amount, 2, '.', '');
-
+$total_amount = $amount;
 $tax_amount = 0;
 $product_service_charge = 0;
 $product_delivery_charge = 0;
@@ -145,7 +143,7 @@ $signature = base64_encode(
 
         <input type="hidden" name="success_url" value="<?= ESEWA_SUCCESS_URL ?>">
 
-        <input type="hidden" name="failure_url" value="<?= ESEWA_FAILURE_URL ?>">
+        <input type="hidden" name="failure_url" value="<?= ESEWA_FAILURE_URL ?>?booking_id=<?= $booking_id ?>">
 
         <input type="hidden"
             name="signed_field_names"

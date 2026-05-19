@@ -108,6 +108,93 @@ if ($booking['payment_status'] !== 'paid') {
     $update->bind_param("i", $booking_id);
     $update->execute();
     $update->close();
+
+    // Send Email Notification
+    require_once '../mailer.php';
+    $subject = "Payment Successful - Booking #INV-" . str_pad($booking_id, 5, '0', STR_PAD_LEFT);
+    
+    // Construct email body with an inline-styled HTML invoice
+    $invoice_no = "INV-" . str_pad($booking_id, 5, '0', STR_PAD_LEFT);
+    $date_str = date('Y-m-d H:i');
+    $user_name = htmlspecialchars($booking['user_name']);
+    $user_email = htmlspecialchars($booking['user_email']);
+    $vehicle_name = htmlspecialchars($booking['vehicle_name']);
+    $period = $booking['start_date'] . ' to ' . $booking['end_date'];
+    $location = htmlspecialchars($booking['location']);
+    $amount = number_format($booking['total_price'], 2);
+    $tx_code = htmlspecialchars($transaction_code);
+    
+    $emailBody = "
+    <div style='font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;'>
+        <div style='background-color: #f97316; padding: 20px; text-align: center; color: white;'>
+            <h1 style='margin: 0; font-size: 24px;'>भटभटे Rental</h1>
+            <p style='margin: 5px 0 0 0; opacity: 0.9;'>Payment Successful - Tax Invoice</p>
+        </div>
+        <div style='padding: 30px;'>
+            <table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom: 20px;'>
+                <tr>
+                    <td style='vertical-align: top;'>
+                        <h3 style='margin-top: 0; color: #64748b;'>BILLED TO</h3>
+                        <p style='margin: 0;'><strong>{$user_name}</strong></p>
+                        <p style='margin: 5px 0 0 0; color: #64748b;'>{$user_email}</p>
+                    </td>
+                    <td style='text-align: right; vertical-align: top;'>
+                        <h3 style='margin-top: 0; color: #64748b;'>INVOICE DETAILS</h3>
+                        <p style='margin: 0;'><strong>Invoice #:</strong> {$invoice_no}</p>
+                        <p style='margin: 5px 0 0 0;'><strong>Date:</strong> {$date_str}</p>
+                        <p style='margin: 5px 0 0 0;'><strong>Status:</strong> <span style='color: #16a34a;'>Paid</span> (eSewa)</p>
+                        <p style='margin: 5px 0 0 0;'><strong>Txn ID:</strong> {$tx_code}</p>
+                    </td>
+                </tr>
+            </table>
+            
+            <table width='100%' cellpadding='12' cellspacing='0' style='border-collapse: collapse; margin-bottom: 20px;'>
+                <thead>
+                    <tr style='background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left;'>
+                        <th>Vehicle & Details</th>
+                        <th style='text-align: right;'>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style='border-bottom: 1px solid #e2e8f0;'>
+                        <td>
+                            <strong style='font-size: 16px;'>{$vehicle_name}</strong><br>
+                            <span style='color: #64748b; font-size: 13px;'>Period: {$period}</span><br>
+                            <span style='color: #64748b; font-size: 13px;'>Location: {$location}</span>
+                        </td>
+                        <td style='text-align: right; font-weight: bold;'>
+                            NPR {$amount}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <table width='100%' cellpadding='5' cellspacing='0'>
+                <tr>
+                    <td></td>
+                    <td style='color: #64748b; text-align: right; width: 100px;'>Subtotal:</td>
+                    <td style='text-align: right; width: 100px;'>NPR {$amount}</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td style='color: #64748b; text-align: right;'>Tax (0%):</td>
+                    <td style='text-align: right;'>NPR 0.00</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td style='font-size: 16px; font-weight: bold; color: #f97316; padding-top: 10px; text-align: right;'>Total Paid:</td>
+                    <td style='text-align: right; font-size: 16px; font-weight: bold; color: #f97316; padding-top: 10px;'>NPR {$amount}</td>
+                </tr>
+            </table>
+        </div>
+        <div style='background-color: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 13px;'>
+            Thank you for choosing Bhatbhatey Rental.<br>
+            If you have any questions, please contact support@bhatbhatey.com.np
+        </div>
+    </div>
+    ";
+    
+    sendMail($booking['user_email'], $subject, $emailBody);
 }
 
 ?>
@@ -324,6 +411,37 @@ body{
     font-weight:700;
 }
 
+.actions { 
+    display: flex; 
+    gap: 12px; 
+    flex-wrap: wrap; 
+    margin-top: 30px; 
+    justify-content: center;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all .18s ease;
+}
+.btn-primary { background: #0f172a; color: white; }
+.btn-primary:hover { background: #1e293b; transform: translateY(-1px); }
+.btn-outline {
+    background: white;
+    color: #0f172a;
+    border: 2px solid #e2e8f0;
+}
+.btn-outline:hover { border-color: #94a3b8; transform: translateY(-1px); }
+
 @media(max-width:768px){
 
     .invoice{
@@ -526,6 +644,16 @@ body{
             support@bhatbhatey.com.np
         </div>
 
+    </div>
+
+    <!-- ══  Buttons  ══ -->
+    <div class="actions">
+        <a href="../my-bookings.php" class="btn btn-primary">
+            📋 My Bookings
+        </a>
+        <a href="../index.php" class="btn btn-outline">
+            🏠 Back to Home
+        </a>
     </div>
 
 </div>
