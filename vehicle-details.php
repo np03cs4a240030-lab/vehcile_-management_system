@@ -499,13 +499,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <?php endif; ?>
 
                                     <div class="form-group">
-                                        <label>📅 Start Date</label>
+                                        <label>Start Date</label>
                                         <input type="date" name="start_date" id="startDate" class="form-control"
                                             required min="<?php echo date('Y-m-d'); ?>">
                                     </div>
 
                                     <div class="form-group">
-                                        <label>📅 End Date</label>
+                                        <label>End Date</label>
                                         <input type="date" name="end_date" id="endDate" class="form-control" required min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>">
                                     </div>
 
