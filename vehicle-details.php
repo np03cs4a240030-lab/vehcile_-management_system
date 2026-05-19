@@ -100,18 +100,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, NOW())
 ");
 
-                $stmt->bind_param(
-                    "iisiidss",
-                    $currentUser['id'],
-                    $vehicleId,
-                    $startDate,
-                    $endDate,
-                    $days,
-                    $totalCost,
-                    $paymentMethod,
-                    $vehicle['location']
-                );
-
+               $stmt->bind_param(
+    "iissidss",
+    $currentUser['id'],
+    $vehicleId,
+    $startDate,
+    $endDate,
+    $days,
+    $totalCost,
+    $paymentMethod,
+    $vehicle['location']
+);
                 if ($stmt->execute()) {
                     $bookingId = $conn->insert_id;
 
@@ -131,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <p>Hi <strong>{$userName}</strong>,</p>
 
-<p>Your booking request has been submitted successfully. It is currently <strong>pending admin approval</strong>. You will be notified once it is approved.</p>
+<p>Your booking has been confirmed successfully </p>
 
 <hr>
 
