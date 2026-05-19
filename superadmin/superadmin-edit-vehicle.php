@@ -77,45 +77,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Edit Vehicle - Super Admin</title>
     <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <style>
         /* PAGE STYLES */
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background: var(--bg-dark);
             min-height: 100vh;
             color: white;
             margin: 0;
             font-family: 'Inter', sans-serif;
         }
         
-        .dashboard-layout { display: flex; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
 
-        /* SIDEBAR */
+        /* SIDEBAR — matches superadmin-vehicles.php */
         .sidebar {
-            width: 260px;
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-            border-right: 1px solid rgba(148,163,184,0.1);
+            width: 240px;
+            background: rgba(255,255,255,0.03);
+            border-right: 1px solid rgba(255,255,255,0.07);
+            display: flex;
+            flex-direction: column;
             min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            flex-shrink: 0;
         }
-        .sidebar-header {
-            padding: 2rem;
-            text-align: center;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        .sidebar-logo {
+            padding: 22px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        .nav-item {
-            padding: 1rem 1.5rem;
-            margin: 0.2rem 1rem;
-            border-radius: 0.5rem;
-            color: #94a3b8;
-            text-decoration: none;
-            display: block;
-            transition: 0.3s;
-        }
-        .nav-item:hover { background: rgba(148, 163, 184, 0.1); color: white; }
-        .nav-item.active { background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%); color: white; }
+        .sidebar-logo img { height: 36px; }
+        .sidebar-logo-text .title { font-size: 14px; font-weight: 700; color: white; }
+        .sidebar-logo-text .sub { font-size: 11px; color: #a855f7; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); border-radius: 20px; padding: 1px 8px; display: inline-block; margin-top: 2px; }
+
+        .sidebar-menu { padding: 16px 12px; flex: 1; display: flex; flex-direction: column; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 4px; transition: all 0.2s; }
+        .sidebar-menu a i { width: 18px; text-align: center; }
+        .sidebar-menu a:hover { background: rgba(255,255,255,0.07); color: white; }
+        .sidebar-menu a.active { background: linear-gradient(135deg, #9333ea, #7c3aed); color: white; }
+
+        .logout-link { margin-top: auto; }
+        .logout-link a { color: #fca5a5 !important; }
+        .logout-link a:hover { background: rgba(239,68,68,0.1) !important; }
 
         /* CONTENT AREA */
-        .main-content { flex: 1; padding: 2rem; }
+        .main-content { margin-left: 240px; flex: 1; padding: 2rem; box-sizing: border-box; }
         .content-header {
             display: flex;
             justify-content: space-between;
@@ -167,15 +188,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="dashboard-layout">
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <img src="../assets/images/logo.png" alt="Logo" style="height: 40px;">
-                <h3>Super Admin</h3>
+            <div class="sidebar-logo">
+                <img src="../assets/images/logo.png" alt="Logo">
+                <div class="sidebar-logo-text">
+                    <div class="title">Bhatbhatey</div>
+                    <div class="sub">Super Admin</div>
+                </div>
             </div>
-            <nav style="margin-top: 1rem;">
-                <a href="superadmin-dashboard.php" class="nav-item">📊 Dashboard</a>
-                <a href="superadmin-users.php" class="nav-item">👥 Users</a>
-                <a href="superadmin-vehicles.php" class="nav-item active">🚗 Vehicles</a>
-                <a href="../logout.php" class="nav-item" style="color: #fca5a5; margin-top: 5rem;">🚪 Logout</a>
+            <nav class="sidebar-menu">
+                <a href="superadmin-dashboard.php"><i class="fas fa-gauge-high"></i> Dashboard</a>
+                <a href="superadmin-users.php"><i class="fas fa-users"></i> Users</a>
+                <a href="superadmin-admins.php"><i class="fas fa-user-shield"></i> Admins</a>
+                <a href="superadmin-vehicles.php" class="active"><i class="fas fa-car"></i> Vehicles</a>
+                <a href="superadmin-bookings.php"><i class="fas fa-calendar-days"></i> Bookings</a>
+                <a href="superadmin-settings.php"><i class="fas fa-gear"></i> Settings</a>
+                <div class="logout-link">
+                    <a href="../logout.php"><i class="fas fa-right-from-bracket"></i> Logout</a>
+                </div>
             </nav>
         </aside>
 

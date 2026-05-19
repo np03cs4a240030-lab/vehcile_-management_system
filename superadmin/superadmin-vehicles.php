@@ -98,10 +98,9 @@ $vehicles = $conn->query($sql);
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
             margin: 0;
-            display: flex;
         }
 
-        .dashboard-layout { display: block; min-height: 100vh; }
+        .dashboard-layout { display: flex; min-height: 100vh; }
 
         /* Sidebar Navigation Styling */
         .sidebar {
@@ -126,7 +125,7 @@ $vehicles = $conn->query($sql);
         .logout-link a:hover { background: rgba(239,68,68,0.1) !important; }
 
         /* Main Content Layout */
-        .main-content { margin-left: 240px; padding: 28px; min-height: 100vh; width: calc(100% - 240px); box-sizing: border-box; }
+        .main-content { margin-left: 240px; width: calc(100% - 240px); padding: 28px; min-height: 100vh; box-sizing: border-box; overflow-x: hidden; }
 
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
         .page-header h1 { font-size: 22px; font-weight: 700; color: white; }

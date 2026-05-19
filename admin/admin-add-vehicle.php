@@ -1,48 +1,61 @@
 <?php
+// load config, db connection, and helper functions
 require_once '../config.php';
 
+// only logged-in admins can access this page
 if (!isLoggedIn() || !isAdmin()) {
     redirect('admin-login.php');
 }
 
+// holds success/error messages shown to the user
 $success = '';
 $error = '';
 
+// handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = sanitize($_POST['name']);
-    $type = $_POST['type'];
-    $location = sanitize($_POST['location']);
+
+    // sanitize and collect form fields
+    $name          = sanitize($_POST['name']);
+    $type          = $_POST['type'];
+    $location      = sanitize($_POST['location']);
     $price_per_day = (float) $_POST['price_per_day'];
-    $fuel_type = sanitize($_POST['fuel_type']);
-    $transmission = sanitize($_POST['transmission']);
-    $seats = (int) $_POST['seats'];
-    $features = sanitize($_POST['features']);
-    $description = sanitize($_POST['description']);
-    $availability = isset($_POST['availability']) ? 1 : 0;
+    $fuel_type     = sanitize($_POST['fuel_type']);
+    $transmission  = sanitize($_POST['transmission']);
+    $seats         = (int) $_POST['seats'];
+    $features      = sanitize($_POST['features']);
+    $description   = sanitize($_POST['description']);
+    // checkbox: 1 if checked, 0 if not
+    $availability  = isset($_POST['availability']) ? 1 : 0;
 
+    // paths used for saving and storing the image
     $file_path = '';
-    $db_path = '';
+    $db_path   = '';
 
-    // IMAGE UPLOAD LOGIC
+    // handle image upload
     if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-        $upload_dir = '../uploads/vehicles/';
-        $db_dir = 'uploads/vehicles/';
+
+        $upload_dir = '../uploads/vehicles/'; // where the file is saved on disk
+        $db_dir     = 'uploads/vehicles/';    // relative path stored in the database
+
+        // create the upload folder if it doesn't exist
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
         }
 
-        $file_tmp = $_FILES['image']['tmp_name'];
+        $file_tmp      = $_FILES['image']['tmp_name'];
         $original_name = $_FILES['image']['name'];
-        $file_ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
-        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+        $file_ext      = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+        $allowed       = ['jpg', 'jpeg', 'png', 'webp']; // accepted image types
 
         if (!in_array($file_ext, $allowed)) {
             $error = 'Only JPG, JPEG, PNG, WEBP files are allowed';
         } else {
+            // generate a unique filename to avoid collisions
             $file_name = uniqid('vehicle_', true) . '.' . $file_ext;
             $file_path = $upload_dir . $file_name;
-            $db_path = $db_dir . $file_name;
+            $db_path   = $db_dir . $file_name;
 
+            // move file from temp location to the uploads folder
             if (!move_uploaded_file($file_tmp, $file_path)) {
                 $error = 'Failed to upload image';
             }
@@ -51,15 +64,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please upload an image';
     }
 
+    // make sure required fields are not empty
     if (empty($name) || empty($type) || empty($location) || empty($price_per_day)) {
         $error = 'Please fill all required fields';
     }
 
+    // insert into db only if no errors
     if (empty($error)) {
         $stmt = $conn->prepare("INSERT INTO vehicles 
             (name, type, location, price_per_day, fuel_type, transmission, seats, features, description, image, availability) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
+        // bind all values: s=string, d=double, i=integer
         $stmt->bind_param(
             "sssdssisssi",
             $name,
@@ -76,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
 
         if ($stmt->execute()) {
+            // redirect back to vehicles list on success
             $_SESSION['success'] = "Vehicle added successfully!";
             redirect('admin-vehicles.php');
             exit();
@@ -93,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Add Vehicle - Admin</title>
 
+<!-- global styles and dashboard layout -->
 <link rel="stylesheet" href="../assets/css/main.css">
 <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
@@ -101,23 +119,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="dashboard-layout">
 
+    <!-- font awesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- left sidebar -->
     <aside class="sidebar">
-        <div class="sidebar-header">
+
+        <!-- logo and panel title -->
+        <div class="sidebar-logo">
             <img src="../assets/images/logo.png" alt="Logo">
-            <h3>Admin Panel</h3>
+            <span>Admin Panel</span>
         </div>
 
-        <nav class="sidebar-nav">
-            <a href="admin-dashboard.php" class="nav-item">📊 Dashboard</a>
-            <a href="admin-vehicles.php" class="nav-item active">🚗 Vehicles</a>
-            <a href="admin-bookings.php" class="nav-item">📅 Bookings</a>
-            <a href="admin-users.php" class="nav-item">👥 Users</a>
-            <a href="../logout.php" class="nav-item logout">🚪 Logout</a>
+        <!-- navigation links -->
+        <nav class="sidebar-menu">
+
+            <a href="admin-dashboard.php">
+                <i class="fas fa-gauge-high"></i>
+                Dashboard
+            </a>
+
+            <!-- vehicles is the active section -->
+            <a href="admin-vehicles.php" class="active">
+                <i class="fas fa-car"></i>
+                Vehicles
+            </a>
+
+            <a href="admin-bookings.php">
+                <i class="fas fa-calendar-days"></i>
+                Bookings
+            </a>
+
+            <a href="admin-users.php">
+                <i class="fas fa-users"></i>
+                Users
+            </a>
+
+            <a href="admin-change-password.php">
+                <i class="fas fa-key"></i>
+                Change Password
+            </a>
+
+            <!-- logout pinned to the bottom of the sidebar -->
+            <div class="logout-link">
+                <a href="../logout.php">
+                    <i class="fas fa-right-from-bracket"></i>
+                    Logout
+                </a>
+            </div>
+
         </nav>
+
     </aside>
 
+    <!-- main page content -->
     <main class="main-content">
 
+        <!-- page heading and back button -->
         <div class="content-header">
             <div>
                 <h1>Add New Vehicle</h1>
@@ -126,12 +184,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="admin-vehicles.php" class="btn btn-secondary">← Back</a>
         </div>
 
+        <!-- show error message if something went wrong -->
         <?php if ($error): ?>
         <div class="alert-error">
             <?php echo $error; ?>
         </div>
         <?php endif; ?>
 
+        <!-- vehicle add form (multipart needed for image upload) -->
         <form method="POST" enctype="multipart/form-data">
 
             <div class="main-grid">
@@ -139,11 +199,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card">
                     <h3 class="card-title">Vehicle Specifications</h3>
 
+                    <!-- vehicle name -->
                     <div class="form-group">
                         <label class="form-label">Vehicle Name *</label>
                         <input type="text" name="name" class="form-input" required>
                     </div>
 
+                    <!-- type and location side by side -->
                     <div class="grid-2">
                         <div class="form-group">
                             <label class="form-label">Vehicle Type *</label>
@@ -160,6 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
+                    <!-- price, fuel, and transmission in a 3-column row -->
                     <div class="grid-3">
                         <div class="form-group">
                             <label class="form-label">Price/Day (NPR)</label>
@@ -184,26 +247,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
+                    <!-- number of seats -->
                     <div class="form-group">
                         <label class="form-label">Seats</label>
                         <input type="number" name="seats" class="form-input">
                     </div>
 
+                    <!-- comma-separated features list -->
                     <div class="form-group">
                         <label class="form-label">Features</label>
                         <input type="text" name="features" class="form-input">
                     </div>
 
+                    <!-- longer description of the vehicle -->
                     <div class="form-group">
                         <label class="form-label">Description</label>
                         <textarea name="description" class="form-input"></textarea>
                     </div>
 
+                    <!-- vehicle photo upload -->
                     <div class="form-group">
                         <label class="form-label">Vehicle Image *</label>
                         <input type="file" name="image" class="form-input">
                     </div>
 
+                    <!-- availability toggle: checked = visible to customers right away -->
                     <div class="availability-box">
                         <label class="availability-label">
                             <input type="checkbox" name="availability" checked>
@@ -214,6 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </label>
                     </div>
 
+                    <!-- submit button -->
                     <button type="submit" class="btn-primary">
                         ✓ Add Vehicle to Fleet
                     </button>
@@ -231,63 +300,108 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <style>
 
+/* light gray page background */
 .body-bg {
     background: var(--brand-light-gray);
 }
 
+/* sidebar: fixed to the left, full height, dark navy */
 .sidebar {
-    background: var(--brand-dark-blue);
-    width: 260px;
-    min-height: 100vh;
-}
-
-.sidebar-header {
-    padding: 2rem 1.5rem;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.sidebar-header img {
-    height: 3rem;
-}
-
-.sidebar-header h3 {
+    width: 240px;
+    background: #1e293b;
     color: white;
-    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 
-.sidebar-nav {
-    padding: 1rem;
+/* logo row at the top of the sidebar */
+.sidebar-logo {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sidebar-logo img {
+    height: 36px;
+}
+
+.sidebar-logo span {
+    font-size: 13px;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+/* nav area fills the remaining sidebar height */
+.sidebar-menu {
+    padding: 16px 12px;
+    flex: 1;
     display: flex;
     flex-direction: column;
 }
 
-.nav-item {
-    padding: 1rem 1.5rem;
-    margin-bottom: 0.5rem;
-    border-radius: 0.5rem;
-    color: white;
+/* individual nav link */
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    color: #94a3b8;
     text-decoration: none;
-    transition: 0.3s;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    transition: all 0.2s;
 }
 
-.nav-item:hover {
-    background: rgba(255,255,255,0.1);
+/* icon fixed width so labels stay aligned */
+.sidebar-menu a i {
+    width: 18px;
+    text-align: center;
+    font-size: 15px;
 }
 
-.nav-item.active {
-    background: var(--brand-orange);
+/* hover state */
+.sidebar-menu a:hover {
+    background: rgba(255,255,255,0.07);
+    color: white;
 }
 
-.nav-item.logout {
+/* orange highlight on the current page link */
+.sidebar-menu a.active {
+    background: #f97316;
+    color: white;
+}
+
+/* logout wrapper pushes itself to the bottom */
+.sidebar-menu .logout-link {
     margin-top: auto;
+}
+
+/* logout link in soft red */
+.sidebar-menu .logout-link a {
     color: #fca5a5;
 }
 
+.sidebar-menu .logout-link a:hover {
+    background: rgba(239,68,68,0.15);
+    color: #fca5a5;
+}
+
+/* offset main content so it doesn't hide behind the fixed sidebar */
 .main-content {
     padding: 2rem;
     flex: 1;
+    margin-left: 240px;
 }
 
+/* header row: title on the left, back button on the right */
 .content-header {
     display: flex;
     justify-content: space-between;
@@ -299,12 +413,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     color: var(--text-secondary);
 }
 
+/* two-column layout: form card is wider on the left */
 .main-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 2rem;
 }
 
+/* white card container */
 .card {
     background: white;
     padding: 2rem;
@@ -316,6 +432,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     margin-bottom: 1.5rem;
 }
 
+/* spacing between each field */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -327,6 +444,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     color: var(--brand-dark-blue);
 }
 
+/* shared style for inputs, selects, and textareas */
 .form-input {
     width: 100%;
     padding: 0.75rem;
@@ -335,6 +453,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-size: 1rem;
 }
 
+/* two equal columns */
 .grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -342,6 +461,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     margin-bottom: 1.5rem;
 }
 
+/* three equal columns */
 .grid-3 {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -349,6 +469,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     margin-bottom: 1.5rem;
 }
 
+/* light blue box around the availability checkbox */
 .availability-box {
     background: #f0f9ff;
     padding: 1rem;
@@ -364,6 +485,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     cursor: pointer;
 }
 
+/* red error banner */
 .alert-error {
     background: #fee2e2;
     color: #b91c1c;
@@ -372,6 +494,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     margin-bottom: 1rem;
 }
 
+/* full-width orange submit button */
 .btn-primary {
     width: 100%;
     padding: 1rem;
