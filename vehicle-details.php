@@ -95,26 +95,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // INSERT BOOKING — status starts as 'pending', admin must approve
                 $stmt = $conn->prepare("
-    INSERT INTO bookings 
-    (user_id, vehicle_id, start_date, end_date, total_days, total_price, payment_method, status, pickup_location, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, NOW())
-");
+                    INSERT INTO bookings 
+                    (user_id, vehicle_id, start_date, end_date, total_days, total_price, payment_method, status, pickup_location, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, NOW())
+                ");
 
-               $stmt->bind_param(
-    "iissidss",
-    $currentUser['id'],
-    $vehicleId,
-    $startDate,
-    $endDate,
-    $days,
-    $totalCost,
-    $paymentMethod,
-    $vehicle['location']
-);
+                $stmt->bind_param(
+                    "iissidss",
+                    $currentUser['id'],
+                    $vehicleId,
+                    $startDate,
+                    $endDate,
+                    $days,
+                    $totalCost,
+                    $paymentMethod,
+                    $vehicle['location']
+                );
+
                 if ($stmt->execute()) {
                     $bookingId = $conn->insert_id;
 
-                    // ── Send booking confirmation email ──────────────────────
+                    
                     $userEmail = $currentUser['email'];
                     $userName  = $currentUser['name'];
 
@@ -123,7 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pickupFormatted = date('F j, Y', strtotime($startDate));
                     $returnFormatted = date('F j, Y', strtotime($endDate));
                     $totalFormatted  = 'NPR ' . number_format($totalCost);
-                    $yearNow         = date('Y');
 
                     $emailBody = "
 <h2>Booking Request Received</h2>
@@ -150,13 +150,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ";
 
                     sendMail($userEmail, $emailSubject, $emailBody);
-                     
 
-                    if ($paymentMethod === 'online') {
-                        redirect('my-bookings.php?msg=booking_pending');
-                    } else {
-                        redirect('booking-confirmation.php?id=' . $bookingId . '&new=1');
-                    }
+                    redirect('booking-confirmation.php?id=' . $bookingId . '&new=1');
+
                 } else {
                     $error = "Booking failed";
                 }
@@ -380,7 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="user/user-dashboard.php"><i class="fas fa-gauge-high"></i> Dashboard</a>
                 <a href="vehicles.php" class="active"><i class="fas fa-car"></i> Browse Vehicles</a>
                 <a href="my-bookings.php"><i class="fas fa-calendar-check"></i> My Bookings</a>
-            <a href="support-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
+                <a href="support-tickets.php"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
                 <div class="nav-section-label">Account</div>
                 <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
                 <a href="logout.php" class="danger"><i class="fas fa-right-from-bracket"></i> Logout</a>
@@ -411,10 +407,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <!-- Vehicle Details -->
                     <div>
                         <div class="vehicle-card">
-                            <img src="<?php echo htmlspecialchars($vehicle['image']); ?>" 
-                                    alt="<?php echo htmlspecialchars($vehicle['name']); ?>"
-                                    style="width:100%; height:400px; object-fit:cover; object-position:center; border-radius:12px;">
-                            
+                            <img src="<?php echo htmlspecialchars($vehicle['image']); ?>"
+                                alt="<?php echo htmlspecialchars($vehicle['name']); ?>"
+                                style="width:100%; height:400px; object-fit:cover; object-position:center; border-radius:12px;">
+
                             <div class="vehicle-content">
                                 <div class="vehicle-header">
                                     <h1 style="font-size: 32px; margin: 0;">
@@ -423,33 +419,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <span class="vehicle-type"><?php echo htmlspecialchars($vehicle['type']); ?></span>
                                 </div>
 
-                                <div
-                                    style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0;">
-                                    <div
-                                        style="padding: 16px; background: var(--brand-light-gray); border-radius: 8px;">
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0;">
+                                    <div style="padding: 16px; background: var(--brand-light-gray); border-radius: 8px;">
                                         <div style="color: #64748b; font-size: 12px;">Location</div>
                                         <div style="font-weight: 600;">
                                             <?php echo htmlspecialchars($vehicle['location']); ?>
                                         </div>
                                     </div>
-                                    <div
-                                        style="padding: 16px; background: var(--brand-light-gray); border-radius: 8px;">
+                                    <div style="padding: 16px; background: var(--brand-light-gray); border-radius: 8px;">
                                         <div style="color: #64748b; font-size: 12px;">Fuel Type</div>
                                         <div style="font-weight: 600;">
                                             <?php echo htmlspecialchars($vehicle['fuel_type']); ?>
                                         </div>
                                     </div>
-                                    <div
-                                        style="padding: 16px; background: var(--brand-light-gray); border-radius: 8px;">
+                                    <div style="padding: 16px; background: var(--brand-light-gray); border-radius: 8px;">
                                         <div style="color: #64748b; font-size: 12px;">Transmission</div>
                                         <div style="font-weight: 600;">
                                             <?php echo htmlspecialchars($vehicle['transmission']); ?>
                                         </div>
                                     </div>
-                                    <div
-                                        style="padding: 16px; background: var(--brand-light-gray); border-radius: 8px;">
+                                    <div style="padding: 16px; background: var(--brand-light-gray); border-radius: 8px;">
                                         <div style="color: #64748b; font-size: 12px;">Seats</div>
-                                        <div style="font-weight: 600;"> <?php echo $vehicle['seats']; ?></div>
+                                        <div style="font-weight: 600;"><?php echo $vehicle['seats']; ?></div>
                                     </div>
                                 </div>
 
@@ -466,11 +457,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <?php
                                         $features = explode(', ', $vehicle['features']);
                                         foreach ($features as $feature):
-                                            ?>
+                                        ?>
                                             <div style="display: flex; align-items: center; gap: 8px;">
                                                 <span><?php echo htmlspecialchars($feature); ?></span>
                                             </div>
-                                            
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
@@ -484,8 +474,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="vehicle-content">
                                 <h3 style="font-size: 20px; margin-bottom: 16px;">Book This Vehicle</h3>
 
-                                <div
-                                    style="font-size: 32px; font-weight: 700; color: var(--brand-orange); margin-bottom: 24px;">
+                                <div style="font-size: 32px; font-weight: 700; color: var(--brand-orange); margin-bottom: 24px;">
                                     NPR <?php echo number_format($vehicle['price_per_day']); ?>
                                     <span style="font-size: 16px; color: #64748b;">/day</span>
                                 </div>
@@ -506,7 +495,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                                     <div class="form-group">
                                         <label>📅 End Date</label>
-                                        <input type="date" name="end_date" id="endDate" class="form-control" required min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>">
+                                        <input type="date" name="end_date" id="endDate" class="form-control"
+                                            required min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>">
                                     </div>
 
                                     <div id="costSummary"
@@ -533,8 +523,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </form>
 
                                 <?php if (!$vehicle['availability']): ?>
-                                    <div
-                                        style="margin-top: 16px; padding: 12px; background: #fee2e2; color: #991b1b; border-radius: 8px; text-align: center; font-size: 14px;">
+                                    <div style="margin-top: 16px; padding: 12px; background: #fee2e2; color: #991b1b; border-radius: 8px; text-align: center; font-size: 14px;">
                                         Currently Unavailable
                                     </div>
                                 <?php endif; ?>
@@ -543,12 +532,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <!-- Reviews Section  -->
+                <!-- Reviews Section -->
                 <div class="vehicle-card" style="margin-top: 32px;">
                     <div class="vehicle-content">
 
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-                            <h3 style="font-size: 22px; margin: 0;"> Customer Reviews</h3>
+                            <h3 style="font-size: 22px; margin: 0;">Customer Reviews</h3>
                             <?php if ($totalReviews > 0): ?>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <div style="font-size: 28px; font-weight: 700; color: var(--brand-orange);">
@@ -614,8 +603,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </main>
     </div>
 
-   
-
     <script>
         const pricePerDay = <?php echo $vehicle['price_per_day']; ?>;
         const startDateInput = document.getElementById('startDate');
@@ -641,8 +628,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         startDateInput.addEventListener('change', function () {
-            endDateInput.min = this.value;
-            calculateCost();
+            // Set end date minimum to the day after start date
+            const startVal = this.value;
+            const nextDay = new Date(startVal);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const nextDayStr = nextDay.toISOString().split('T')[0];
+
+            endDateInput.min = nextDayStr;
+
+            // Clear end date if it's now invalid (before or equal to new start date)
+            if (endDateInput.value && endDateInput.value <= startVal) {
+                endDateInput.value = '';
+                costSummary.style.display = 'none';
+            } else {
+                calculateCost();
+            }
         });
 
         endDateInput.addEventListener('change', calculateCost);
