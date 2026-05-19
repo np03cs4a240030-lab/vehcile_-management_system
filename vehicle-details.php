@@ -145,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <hr>
 
-<p>Thank you for using <strong>Bhatbhatey Rental</strong>.</p>
+<p>Thank you for using <strong> Bhatbhatey Rental</strong>.</p>
 <p>We will review your booking and confirm it shortly.</p>
 ";
 
