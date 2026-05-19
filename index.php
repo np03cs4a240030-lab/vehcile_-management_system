@@ -2,6 +2,52 @@
 session_start();
 require_once 'includes/connection.php';
 include 'chatbot/chatbox.php';
+require_once 'mailer.php';
+
+
+// ── Contact Form Handler ────────────────────────────────────────────────────
+$contact_success = false;
+$contact_error   = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
+    $name    = trim(strip_tags($_POST['contact_name']    ?? ''));
+    $email   = trim(strip_tags($_POST['contact_email']   ?? ''));
+    $message = trim(strip_tags($_POST['contact_message'] ?? ''));
+
+    if ($name === '' || $email === '' || $message === '') {
+        $contact_error = 'Please fill in all fields.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $contact_error = 'Please enter a valid email address.';
+    } else {
+        $subject = "New Contact Message from {$name} — Bhatbhatey Rental";
+        $body    = "
+        <div style='font-family:DM Sans,sans-serif;max-width:600px;margin:0 auto;'>
+            <h2 style='color:#f97316;'>New Contact Message</h2>
+            <p><strong>Name:</strong> " . htmlspecialchars($name) . "</p>
+            <p><strong>Email:</strong> " . htmlspecialchars($email) . "</p>
+            <p><strong>Message:</strong></p>
+            <p style='background:#f4f6fb;padding:16px;border-radius:8px;'>" . nl2br(htmlspecialchars($message)) . "</p>
+            <hr style='margin-top:32px;border:none;border-top:1px solid #edf0f8;'>
+            <p style='color:#8b9ab4;font-size:12px;'>Sent via Bhatbhatey Rental contact form</p>
+        </div>";
+
+        $sent = sendMail(MAIL_FROM_EMAIL, $subject, $body);
+
+        if ($sent) {
+            $confirmBody = "
+            <div style='font-family:DM Sans,sans-serif;max-width:600px;margin:0 auto;'>
+                <h2 style='color:#f97316;'>Thanks for reaching out, " . htmlspecialchars($name) . "!</h2>
+                <p>We've received your message and will get back to you within a few hours.</p>
+                <p style='background:#f4f6fb;padding:16px;border-radius:8px;'><em>" . nl2br(htmlspecialchars($message)) . "</em></p>
+                <p>The Bhatbhatey Rental Team</p>
+            </div>";
+            sendMail($email, 'We received your message — Bhatbhatey Rental', $confirmBody);
+            $contact_success = true;
+        } else {
+            $contact_error = 'Sorry, we could not send your message. Please try again or contact us directly.';
+        }
+    }
+}
 
 $sql = "SELECT * FROM vehicles WHERE availability = TRUE ORDER BY id DESC LIMIT 6";
 $result = $conn->query($sql);
@@ -18,7 +64,7 @@ if ($result && $result->num_rows > 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>भटभटे — Nepal's Premier Vehicle Rental</title>
+    <title>Bhatbhatey — Nepal's Premier Vehicle Rental</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
@@ -42,6 +88,8 @@ if ($result && $result->num_rows > 0) {
             --border: rgba(255, 255, 255, 0.06);
             --radius-xl: 28px;
             --radius-2xl: 40px;
+            --green: #16a34a;
+            --red: #dc2626;
         }
 
         *, *::before, *::after {
@@ -754,179 +802,6 @@ if ($result && $result->num_rows > 0) {
             font-weight: 600;
         }
 
-        /* ─── FOOTER ─── */
-        footer {
-            background: var(--dark);
-            color: var(--white);
-            padding: 90px 0 40px;
-            border-radius: 56px 56px 0 0;
-            margin-top: 80px;
-            /* FIX: Ensure footer doesn't clip its own grid */
-            overflow: visible;
-        }
-
-        /* FIX: Footer grid — was collapsing due to missing explicit width context */
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 2.2fr 1fr 1fr 1.4fr;
-            gap: 48px;
-            margin-bottom: 64px;
-            /* FIX: prevent children from overflowing and collapsing grid */
-            min-width: 0;
-        }
-
-        /* FIX: All direct grid children must not overflow */
-        .footer-grid > * {
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        .footer-brand { display: flex; flex-direction: column; }
-
-        .footer-brand .footer-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 18px;
-            text-decoration: none;
-            /* FIX: constrain logo height so it doesn't blow up the column */
-            max-width: 200px;
-        }
-
-        .footer-brand .footer-logo img {
-            /* FIX: was 44px but rendering at full natural size — lock both dimensions */
-            height: 44px;
-            max-height: 44px;
-            width: auto;
-            max-width: 160px;
-            object-fit: contain;
-            display: block;
-            transition: filter 0.3s, transform 0.3s;
-        }
-
-        .footer-brand .footer-logo img:hover {
-            filter: drop-shadow(0 0 8px var(--orange));
-            transform: scale(1.04);
-        }
-
-        .footer-brand .footer-logo-text {
-            font-family: 'Syne', sans-serif;
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--white);
-            letter-spacing: -0.5px;
-            white-space: nowrap;
-        }
-
-        .footer-brand p {
-            color: var(--slate);
-            font-size: 14px;
-            line-height: 1.75;
-            /* FIX: remove max-width so it fills the grid column properly */
-            max-width: 100%;
-        }
-
-        .footer-social {
-            display: flex;
-            gap: 12px;
-            margin-top: 28px;
-        }
-
-        .social-btn {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            background: var(--dark-3);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--slate);
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-
-        .social-btn:hover {
-            background: var(--orange);
-            color: var(--white);
-            border-color: var(--orange);
-        }
-
-        .footer-col h4 {
-            font-family: 'Syne', sans-serif;
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 24px;
-            color: var(--white);
-        }
-
-        .footer-col a {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--slate);
-            font-size: 14px;
-            margin-bottom: 14px;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .footer-col a:hover {
-            color: var(--white);
-            padding-left: 4px;
-        }
-
-        .newsletter-input-wrap {
-            display: flex;
-            border-radius: 14px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-top: 8px;
-        }
-
-        .newsletter-input-wrap input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            padding: 13px 16px;
-            color: var(--white);
-            font-size: 14px;
-            font-family: 'DM Sans', sans-serif;
-            min-width: 0; /* FIX: prevent input from overflowing */
-        }
-
-        .newsletter-input-wrap input::placeholder { color: var(--slate); }
-
-        .newsletter-submit {
-            background: var(--orange);
-            border: none;
-            cursor: pointer;
-            padding: 0 16px;
-            color: var(--white);
-            transition: background 0.2s;
-            flex-shrink: 0;
-        }
-
-        .newsletter-submit:hover { background: var(--orange-deep); }
-
-        .footer-bottom {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 40px;
-            border-top: 1px solid rgba(255, 255, 255, 0.07);
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .footer-bottom p { color: var(--slate); font-size: 13px; }
-
-        .footer-bottom-links { display: flex; gap: 24px; }
-
-        .footer-bottom-links a { color: var(--slate); font-size: 13px; }
-        .footer-bottom-links a:hover { color: var(--white); }
-
         /* ─── CONTACT ─── */
         .contact-wrap {
             display: grid;
@@ -1013,6 +888,105 @@ if ($result && $result->num_rows > 0) {
 
         .contact-form-header p { color: var(--slate); font-size: 14px; }
 
+        /* ─── FORM ALERT BANNERS ─── */
+        .form-alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 24px;
+            animation: slideDown 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-alert svg { flex-shrink: 0; margin-top: 1px; }
+
+        .form-alert-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #15803d;
+        }
+
+        .form-alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+        }
+
+        /* ─── SUCCESS STATE ─── */
+        .form-success-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            text-align: center;
+        }
+
+        .success-icon-wrap {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #16a34a;
+            margin-bottom: 20px;
+            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+
+        .success-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .success-desc {
+            color: var(--slate);
+            font-size: 14px;
+            line-height: 1.7;
+            max-width: 280px;
+            margin-bottom: 28px;
+        }
+
+        .btn-send-another {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: 1.5px solid #e8ecf5;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+            cursor: pointer;
+            background: transparent;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .btn-send-another:hover {
+            border-color: var(--orange);
+            color: var(--orange);
+        }
+
         .form-group { margin-bottom: 20px; }
 
         .form-label {
@@ -1049,6 +1023,16 @@ if ($result && $result->num_rows > 0) {
         .form-input::placeholder { color: #b0bdd0; }
         .form-textarea { resize: none; min-height: 120px; }
 
+        /* ─── Input validation states ─── */
+        .form-input.input-error {
+            border-color: var(--red);
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.08);
+        }
+
+        .form-input.input-valid {
+            border-color: var(--green);
+        }
+
         .form-submit {
             width: 100%;
             background: var(--dark);
@@ -1067,13 +1051,203 @@ if ($result && $result->num_rows > 0) {
             gap: 10px;
             transition: all 0.25s;
             margin-top: 8px;
+            position: relative;
         }
 
-        .form-submit:hover {
+        .form-submit:hover:not(:disabled) {
             background: var(--orange);
             box-shadow: 0 12px 32px rgba(249, 115, 22, 0.35);
             transform: translateY(-1px);
         }
+
+        .form-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Loading spinner */
+        .btn-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .form-submit.loading .btn-spinner { display: block; }
+        .form-submit.loading .btn-label  { display: none; }
+
+        /* ─── FOOTER ─── */
+        footer {
+            background: var(--dark);
+            color: var(--white);
+            padding: 90px 0 40px;
+            border-radius: 56px 56px 0 0;
+            margin-top: 80px;
+            overflow: visible;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr 1fr 1.4fr;
+            gap: 48px;
+            margin-bottom: 64px;
+            min-width: 0;
+        }
+
+        .footer-grid > * {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .footer-brand { display: flex; flex-direction: column; }
+
+        .footer-brand .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            text-decoration: none;
+            max-width: 200px;
+        }
+
+        .footer-brand .footer-logo img {
+            height: 44px;
+            max-height: 44px;
+            width: auto;
+            max-width: 160px;
+            object-fit: contain;
+            display: block;
+            transition: filter 0.3s, transform 0.3s;
+        }
+
+        .footer-brand .footer-logo img:hover {
+            filter: drop-shadow(0 0 8px var(--orange));
+            transform: scale(1.04);
+        }
+
+        .footer-brand .footer-logo-text {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: -0.5px;
+            white-space: nowrap;
+        }
+
+        .footer-brand p {
+            color: var(--slate);
+            font-size: 14px;
+            line-height: 1.75;
+            max-width: 100%;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .social-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: var(--dark-3);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--slate);
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .social-btn:hover {
+            background: var(--orange);
+            color: var(--white);
+            border-color: var(--orange);
+        }
+
+        .footer-col h4 {
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--white);
+        }
+
+        .footer-col a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--slate);
+            font-size: 14px;
+            margin-bottom: 14px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .footer-col a:hover {
+            color: var(--white);
+            padding-left: 4px;
+        }
+
+        .newsletter-input-wrap {
+            display: flex;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 8px;
+        }
+
+        .newsletter-input-wrap input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 13px 16px;
+            color: var(--white);
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            min-width: 0;
+        }
+
+        .newsletter-input-wrap input::placeholder { color: var(--slate); }
+
+        .newsletter-submit {
+            background: var(--orange);
+            border: none;
+            cursor: pointer;
+            padding: 0 16px;
+            color: var(--white);
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .newsletter-submit:hover { background: var(--orange-deep); }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .footer-bottom p { color: var(--slate); font-size: 13px; }
+
+        .footer-bottom-links { display: flex; gap: 24px; }
+
+        .footer-bottom-links a { color: var(--slate); font-size: 13px; }
+        .footer-bottom-links a:hover { color: var(--white); }
 
         /* ─── SUPPORT TICKET ─── */
         .ticket-float {
@@ -1108,12 +1282,12 @@ if ($result && $result->num_rows > 0) {
             right: 24px;
             background: #25D366;
             color: white;
-            padding: 14px 18px;
-            border-radius: 50px;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 20px;
+            justify-content: center;
             box-shadow: 0 10px 25px rgba(37, 211, 102, 0.4);
             text-decoration: none;
             z-index: 90;
@@ -1141,19 +1315,13 @@ if ($result && $result->num_rows > 0) {
         ══════════════════════════════════════ */
 
         @media (max-width: 1199px) {
-            .fleet-grid {
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            }
-            /* FIX: footer grid to 2 columns on medium screens */
-            .footer-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 40px;
-            }
+            .fleet-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
         }
 
         @media (max-width: 899px) {
-            .nav-links   { display: none; }
-            .nav-actions { display: none; }
+            .nav-links    { display: none; }
+            .nav-actions  { display: none; }
             .nav-hamburger { display: flex; }
 
             .stats-card { grid-template-columns: repeat(2, 1fr); }
@@ -1171,7 +1339,6 @@ if ($result && $result->num_rows > 0) {
             .contact-cards { grid-template-columns: 1fr 1fr; }
 
             .footer-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
-
             .hero-content { padding: 120px 0 60px; }
         }
 
@@ -1183,18 +1350,11 @@ if ($result && $result->num_rows > 0) {
             .search-btn { padding: 16px; justify-content: center; }
 
             .stats-card { grid-template-columns: 1fr 1fr; }
-
             .fleet-grid { grid-template-columns: 1fr; }
-
             .contact-cards { grid-template-columns: 1fr; }
-
-            /* FIX: footer to single column on mobile */
             .footer-grid { grid-template-columns: 1fr; gap: 32px; }
-
             .contact-form-wrap { padding: 28px 20px; }
-
             .hero-trust { gap: 14px; }
-
             .footer-bottom { flex-direction: column; align-items: flex-start; }
         }
     </style>
@@ -1228,7 +1388,8 @@ if ($result && $result->num_rows > 0) {
                     id="navLogoImg"
                     onerror="this.style.display='none'; document.getElementById('navLogoFallback').style.display='flex';">
                 <span class="logo-fallback-text" id="navLogoFallback">
-                    <span class="logo-dot"></span>भटभटे
+                    <span class="logo-dot"></span>
+                    Bhatbhatey
                 </span>
             </a>
 
@@ -1249,9 +1410,7 @@ if ($result && $result->num_rows > 0) {
             </div>
 
             <button class="nav-hamburger" id="hamburgerBtn" aria-label="Open menu">
-                <span></span>
-                <span></span>
-                <span></span>
+                <span></span><span></span><span></span>
             </button>
 
         </div>
@@ -1563,57 +1722,158 @@ if ($result && $result->num_rows > 0) {
                     </div>
                 </div>
 
+                <!-- ══════════════════════════════════
+                     CONTACT FORM — FIXED
+                     Key fixes:
+                     1. Wrapped in <form> with method="POST" action="#contact"
+                     2. Added name attributes to all inputs
+                     3. Added hidden input[name="contact_submit"]
+                     4. Changed button to type="submit"
+                     5. Added PHP success/error feedback rendering
+                     6. Added client-side validation with visual states
+                ════════════════════════════════════ -->
                 <div class="contact-form-wrap">
-                    <div class="contact-form-header">
-                        <h3>Send a Message</h3>
-                        <p>We'll get back to you within a few hours.</p>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
-                            </svg>
-                            Full Name
-                        </label>
-                        <input type="text" class="form-input" placeholder="Ram Sharma">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                            Email Address
-                        </label>
-                        <input type="email" class="form-input" placeholder="ram@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                            </svg>
-                            Message
-                        </label>
-                        <textarea class="form-input form-textarea" placeholder="Tell us how we can help..."></textarea>
-                    </div>
-                    <button type="button" class="form-submit">
-                        Send Message
-                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 19-7z" />
-                        </svg>
-                    </button>
+
+                    <?php if ($contact_success): ?>
+                        <!-- SUCCESS STATE — shown after successful submission -->
+                        <div class="form-success-state" id="formSuccessState">
+                            <div class="success-icon-wrap">
+                                <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div class="success-title">Message Sent!</div>
+                            <p class="success-desc">
+                                Thanks for reaching out. We've sent a confirmation to your inbox and will get back to you within a few hours.
+                            </p>
+                            <button class="btn-send-another" onclick="window.location.href='#contact'">
+                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M12 19l-7-7 7-7M19 12H5" />
+                                </svg>
+                                Send Another Message
+                            </button>
+                        </div>
+
+                    <?php else: ?>
+                        <!-- FORM STATE — normal or error -->
+                        <div class="contact-form-header">
+                            <h3>Send a Message</h3>
+                            <p>We'll get back to you within a few hours.</p>
+                        </div>
+
+                        <!-- ERROR BANNER — shown when PHP validation fails or mail fails -->
+                        <?php if ($contact_error !== ''): ?>
+                            <div class="form-alert form-alert-error" role="alert">
+                                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                                <?php echo htmlspecialchars($contact_error); ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <!--
+                            FIX 1: Added <form> wrapper with method="POST" and action pointing to #contact
+                            FIX 2: action="#contact" keeps user on the contact section after submit
+                        -->
+                        <form
+                            method="POST"
+                            action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>#contact"
+                            id="contactForm"
+                            novalidate>
+
+                            <!--
+                                FIX 3: Hidden field — PHP checks isset($_POST['contact_submit'])
+                                Without this the PHP handler is NEVER triggered
+                            -->
+                            <input type="hidden" name="contact_submit" value="1">
+
+                            <!-- FIX 4: name="contact_name" added -->
+                            <div class="form-group">
+                                <label class="form-label" for="contact_name">
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg>
+                                    Full Name
+                                </label>
+                                <input
+                                    type="text"
+                                    id="contact_name"
+                                    name="contact_name"
+                                    class="form-input"
+                                    placeholder="Ram Sharma"
+                                    value="<?php echo htmlspecialchars($_POST['contact_name'] ?? ''); ?>"
+                                    required
+                                    autocomplete="name">
+                            </div>
+
+                            <!-- FIX 5: name="contact_email" added -->
+                            <div class="form-group">
+                                <label class="form-label" for="contact_email">
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    id="contact_email"
+                                    name="contact_email"
+                                    class="form-input"
+                                    placeholder="ram@example.com"
+                                    value="<?php echo htmlspecialchars($_POST['contact_email'] ?? ''); ?>"
+                                    required
+                                    autocomplete="email">
+                            </div>
+
+                            <!-- FIX 6: name="contact_message" added -->
+                            <div class="form-group">
+                                <label class="form-label" for="contact_message">
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                    </svg>
+                                    Message
+                                </label>
+                                <textarea
+                                    id="contact_message"
+                                    name="contact_message"
+                                    class="form-input form-textarea"
+                                    placeholder="Tell us how we can help..."
+                                    required><?php echo htmlspecialchars($_POST['contact_message'] ?? ''); ?></textarea>
+                            </div>
+
+                            <!--
+                                FIX 7: Changed type="button" to type="submit"
+                                type="button" never triggers form submission
+                            -->
+                            <button type="submit" class="form-submit" id="submitBtn">
+                                <span class="btn-label" style="display:flex; align-items:center; gap:10px;">
+                                    Send Message
+                                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 19-7z" />
+                                    </svg>
+                                </span>
+                                <span class="btn-spinner"></span>
+                            </button>
+
+                        </form>
+                    <?php endif; ?>
+
                 </div>
             </div>
         </div>
     </section>
 
-   
-
-    <!-- WhatsApp -->
-    <a href="https://wa.me/9779744368091?text=Hi%20I%20need%20help" class="whatsapp-float" target="_blank">
-        <span>💬</span>
+    <!-- WhatsApp Float -->
+    <a href="https://wa.me/9779744368091?text=Hi%20I%20need%20help" class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
+        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
     </a>
-    <br>
-     <!-- Support Ticket -->
+
+    <!-- Support Ticket Float -->
     <a href="support-tickets.php" class="ticket-float">
         <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
@@ -1635,7 +1895,7 @@ if ($result && $result->num_rows > 0) {
                             onerror="this.style.display='none'; document.getElementById('footerLogoFallback').style.display='flex';">
                         <span id="footerLogoFallback" style="display:none; align-items:center; gap:8px;">
                             <span class="logo-dot"></span>
-                            <span class="footer-logo-text">भटभटे</span>
+                            <span class="footer-logo-text">Bhatbhatey</span>
                         </span>
                     </a>
                     <p>Nepal's most trusted vehicle rental platform. Making transportation accessible, affordable, and effortless for everyone.</p>
@@ -1652,7 +1912,7 @@ if ($result && $result->num_rows > 0) {
                                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
                             </svg>
                         </a>
-                        <a href="#" class="social-btn" aria-label="Twitter">
+                        <a href="#" class="social-btn" aria-label="Twitter / X">
                             <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                             </svg>
@@ -1711,7 +1971,7 @@ if ($result && $result->num_rows > 0) {
                     <h4>Newsletter</h4>
                     <p style="color:var(--slate); font-size:13px; line-height:1.6; margin-bottom:16px;">Get the latest ride offers and deals delivered to your inbox.</p>
                     <div class="newsletter-input-wrap">
-                        <input type="email" placeholder="your@email.com">
+                        <input type="email" placeholder="your@email.com" aria-label="Newsletter email">
                         <button class="newsletter-submit" aria-label="Subscribe">
                             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -1723,7 +1983,7 @@ if ($result && $result->num_rows > 0) {
             </div>
 
             <div class="footer-bottom">
-                <p>&copy; 2026 भटभटे Rental &mdash; Kathmandu, Nepal.</p>
+                <p>&copy; 2026 Bhatbhatey Rental &mdash; Kathmandu, Nepal.</p>
                 <div class="footer-bottom-links">
                     <a href="privacy.php">Privacy Policy</a>
                     <a href="cookie.php">Cookie Policy</a>
@@ -1776,14 +2036,14 @@ if ($result && $result->num_rows > 0) {
         const counters = document.querySelectorAll('.counter');
         const observed = new Set();
 
-        const observer = new IntersectionObserver(entries => {
+        const counterObserver = new IntersectionObserver(entries => {
             entries.forEach(entry => {
                 if (entry.isIntersecting && !observed.has(entry.target)) {
                     observed.add(entry.target);
-                    const el       = entry.target;
-                    const target   = +el.getAttribute('data-target');
-                    const duration = 1800;
-                    const step     = 16;
+                    const el        = entry.target;
+                    const target    = +el.getAttribute('data-target');
+                    const duration  = 1800;
+                    const step      = 16;
                     const increment = target / (duration / step);
                     let current = 0;
                     const timer = setInterval(() => {
@@ -1795,7 +2055,58 @@ if ($result && $result->num_rows > 0) {
             });
         }, { threshold: 0.4 });
 
-        counters.forEach(c => observer.observe(c));
+        counters.forEach(c => counterObserver.observe(c));
+
+        // ── Contact form: client-side validation + loading state
+        const contactForm = document.getElementById('contactForm');
+        const submitBtn   = document.getElementById('submitBtn');
+
+        if (contactForm) {
+            // Real-time validation feedback
+            contactForm.querySelectorAll('.form-input').forEach(input => {
+                input.addEventListener('blur', () => validateField(input));
+                input.addEventListener('input', () => {
+                    if (input.classList.contains('input-error')) validateField(input);
+                });
+            });
+
+            function validateField(input) {
+                const empty = input.value.trim() === '';
+                const isEmail = input.type === 'email';
+                const invalidEmail = isEmail && input.value.trim() !== '' &&
+                    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim());
+
+                if (empty || invalidEmail) {
+                    input.classList.add('input-error');
+                    input.classList.remove('input-valid');
+                } else {
+                    input.classList.remove('input-error');
+                    input.classList.add('input-valid');
+                }
+            }
+
+            // Show loading state on submit
+            contactForm.addEventListener('submit', function(e) {
+                const inputs = contactForm.querySelectorAll('.form-input');
+                let hasError = false;
+
+                inputs.forEach(input => {
+                    validateField(input);
+                    if (input.classList.contains('input-error')) hasError = true;
+                });
+
+                if (hasError) {
+                    e.preventDefault();
+                    return;
+                }
+
+                // Show loading spinner
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('loading');
+                }
+            });
+        }
     </script>
 </body>
 
