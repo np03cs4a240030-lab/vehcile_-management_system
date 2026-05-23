@@ -317,7 +317,7 @@ $vehicles = $conn->query($sql);
 
 .sidebar-menu .logout-link a{
     color:#fca5a5;
-}
+}a
 
 .sidebar-menu .logout-link a:hover{
     background:rgba(239,68,68,0.15);
